@@ -378,9 +378,31 @@ public class LeaderboardPlugin extends JavaPlugin {
                 getLogger().warning("Database is overloaded! Skipping update of players.");
                 return;
             }
-            for(Player p : Bukkit.getOnlinePlayers()) {
+            int queuedTasks = getTopManager().getQueuedTasks();
+            int maxFetchers = getTopManager().getMaxFetchers();
+            if(queuedTasks > maxFetchers * 10) {
+                getLogger().warning("Task queue is saturated (" + queuedTasks + " queued). Skipping update cycle.");
+                return;
+            }
+            List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+            int batchSize = Math.max(1, maxFetchers / 2);
+            for(int i = 0; i < players.size(); i += batchSize) {
                 if(isShuttingDown()) return;
-                getTopManager().submit(() -> getCache().updatePlayerStats(p));
+                int end = Math.min(i + batchSize, players.size());
+                List<Player> batch = players.subList(i, end);
+                for(Player p : batch) {
+                    if(isShuttingDown()) return;
+                    getTopManager().submit(() -> getCache().updatePlayerStats(p));
+                }
+                // Yield between batches to let queued tasks drain
+                if(end < players.size()) {
+                    try {
+                        Thread.sleep(50);
+                    } catch(InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
             }
         }, 10*20, config.getInt("stat-refresh"));
     }

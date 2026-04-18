@@ -121,22 +121,19 @@ public class Cache {
 		}
 		boolean reverse = plugin.getAConfig().getStringList("reverse-sort").contains(board);
 		try {
-			Connection conn = method.getConnection();
 			String sortBy = type == TimedType.ALLTIME ? "value" : type.lowerName() + "_delta";
-			PreparedStatement ps = conn.prepareStatement(String.format(
+			try (Connection conn = method.getConnection();
+				 PreparedStatement ps = conn.prepareStatement(String.format(
 					method.formatStatement(SELECT_POSITION),
 					tablePrefix+board,
 					sortBy,
 					reverse ? "asc" : "desc",
 					position-1
-			));
-
-			ResultSet r = ps.executeQuery();
-
-			StatEntry se = processData(r, sortBy, position, board, type);
-			ps.close();
-			method.close(conn);
-			return se;
+			))) {
+				ResultSet r = ps.executeQuery();
+				StatEntry se = processData(r, sortBy, position, board, type);
+				return se;
+			}
 		} catch(SQLException e) {
 			plugin.getLogger().log(Level.WARNING, "Unable to get stat of player:", e);
 			return StatEntry.error(position, board, type);
@@ -157,65 +154,62 @@ public class Cache {
 		boolean reverse = plugin.getAConfig().getStringList("reverse-sort").contains(board);
 		StatEntry r = null;
 		try {
-			Connection conn = method.getConnection();
 			String sortBy = type == TimedType.ALLTIME ? "value" : type.lowerName() + "_delta";
-			PreparedStatement ps = conn.prepareStatement(String.format(
+			try (Connection conn = method.getConnection();
+				 PreparedStatement ps = conn.prepareStatement(String.format(
 					method.formatStatement(GET_POSITION),
 					board,
 					sortBy,
 					reverse ? "asc" : "desc",
 					tablePrefix+board
-			));
+			))) {
+				ps.setString(1, player.getUniqueId().toString());
 
-			ps.setString(1, player.getUniqueId().toString());
+				try (ResultSet rs = ps.executeQuery()) {
+					rs.next();
 
-			ResultSet rs = ps.executeQuery();
-
-			rs.next();
-
-			String uuidraw = null;
-			double value = -1;
-			String name = "-Unknown-";
-			String displayName = name;
-			String prefix = "";
-			String suffix = "";
-			int position = -1;
-			try {
-				uuidraw = rs.getString(1);
-				name = rs.getString(3);
-				prefix = rs.getString(4);
-				suffix = rs.getString(5);
-				displayName = rs.getString(6);
-				position = rs.getInt(7);
-				value = rs.getDouble(sortByIndexes.computeIfAbsent(sortBy,
-						k -> {
-							try {
-								Debug.info("Calculating (statentry) column for "+sortBy);
-								return rs.findColumn(sortBy);
-							} catch (SQLException e) {
-								plugin.getLogger().log(Level.SEVERE, "Error while finding a column for "+sortBy, e);
-								return -1;
-							}
+					String uuidraw = null;
+					double value = -1;
+					String name = "-Unknown-";
+					String displayName = name;
+					String prefix = "";
+					String suffix = "";
+					int position = -1;
+					try {
+						uuidraw = rs.getString(1);
+						name = rs.getString(3);
+						prefix = rs.getString(4);
+						suffix = rs.getString(5);
+						displayName = rs.getString(6);
+						position = rs.getInt(7);
+						value = rs.getDouble(sortByIndexes.computeIfAbsent(sortBy,
+								k -> {
+									try {
+										Debug.info("Calculating (statentry) column for "+sortBy);
+										return rs.findColumn(sortBy);
+									} catch (SQLException e) {
+										plugin.getLogger().log(Level.SEVERE, "Error while finding a column for "+sortBy, e);
+										return -1;
+									}
+								}
+						));
+					} catch(SQLException e) {
+						if(
+								!e.getMessage().contains("ResultSet closed") &&
+										!e.getMessage().contains("empty result set") &&
+										!e.getMessage().contains("[2000-")
+						) {
+							throw e;
 						}
-				));
-			} catch(SQLException e) {
-				if(
-						!e.getMessage().contains("ResultSet closed") &&
-								!e.getMessage().contains("empty result set") &&
-								!e.getMessage().contains("[2000-")
-				) {
-					throw e;
+					}
+					if(prefix == null) prefix = "";
+					if(suffix == null) suffix = "";
+					if(displayName == null) displayName = name;
+					if(uuidraw != null) {
+						r = new StatEntry(position, board, prefix, name, displayName, UUID.fromString(uuidraw), suffix, value, type);
+					}
 				}
 			}
-			if(prefix == null) prefix = "";
-			if(suffix == null) suffix = "";
-			if(displayName == null) displayName = name;
-			if(uuidraw != null) {
-				r = new StatEntry(position, board, prefix, name, displayName, UUID.fromString(uuidraw), suffix, value, type);
-			}
-			rs.close();
-			ps.close();
-			method.close(conn);
 		} catch (SQLException e) {
 			plugin.getLogger().log(Level.WARNING, "Unable to get position/value of player:", e);
 			return StatEntry.error(-1, board, type);
@@ -422,16 +416,13 @@ public class Cache {
 
 	public List<String> getDbTableList() {
 		List<String> b = new ArrayList<>();
-		try {
-
-			ResultSet r;
-			Connection conn = method.getConnection();
-			Statement statement = conn.createStatement();
-			r = statement.executeQuery(
+		try (Connection conn = method.getConnection();
+			 Statement statement = conn.createStatement();
+			 ResultSet r = statement.executeQuery(
 					method.formatStatement(
 							LIST_TABLES.getOrDefault(method.getName(), "show tables;")
 					)
-			);
+			)) {
 			while(r.next()) {
 				String e = r.getString(1);
 				if(e.indexOf(tablePrefix) != 0) continue;
@@ -439,10 +430,6 @@ public class Cache {
 				if(name.equals("extras")) continue;
 				b.add(e);
 			}
-
-			statement.close();
-			r.close();
-			method.close(conn);
 		} catch(SQLException e) {
 			plugin.getLogger().log(Level.WARNING, "Unable to get list of tables:", e);
 		}
@@ -629,11 +616,7 @@ public class Cache {
 				}
 			}
 
-			Map<TimedType, Double> lastTotals = new HashMap<>();
-			for(TimedType type : TimedType.values()) {
-				if(type == TimedType.ALLTIME) continue;
-				lastTotals.put(type, getLastTotal(board, player, type));
-			}
+			Map<TimedType, Double> lastTotals = getAllLastTotals(board, player);
 
 
 			if(debug) Debug.info("Updating "+player.getName()+" on board "+board+" with values v: "+output+" suffix: "+ finalSuffix +" prefix: "+ finalPrefix);
@@ -722,63 +705,83 @@ public class Cache {
 
 	public Double getLastTotal(String board, OfflinePlayer player, TimedType type) {
 		Double last = null;
-		try {
-			Connection conn = method.getConnection();
-			try {
-				PreparedStatement ps = conn.prepareStatement(String.format(
-						method.formatStatement(QUERY_LASTTOTAL),
-						type.lowerName()+"_lasttotal",
-						tablePrefix+board
-				));
-
-				ps.setString(1, player.getUniqueId().toString());
-
-				ResultSet rs = ps.executeQuery();
-
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(String.format(
+					method.formatStatement(QUERY_LASTTOTAL),
+					type.lowerName()+"_lasttotal",
+					tablePrefix+board
+			))) {
+			ps.setString(1, player.getUniqueId().toString());
+			try (ResultSet rs = ps.executeQuery()) {
 				if(method instanceof MysqlMethod || method instanceof H2Method) {
 					rs.next();
 				}
 				last = rs.getDouble(1);
-				rs.close();
-				ps.close();
-				method.close(conn);
-			} catch(SQLException e) {
-				method.close(conn);
-				String m = e.getMessage();
-				if(m.contains("empty result set") || m.contains("ResultSet closed") || m.contains("[2000-")) return last;
-				plugin.getLogger().log(Level.WARNING, "Unable to get last total for "+player.getName()+" on "+type+" of "+board, e);
 			}
-		} catch(SQLException ignored) {}
-
+		} catch(SQLException e) {
+			String m = e.getMessage();
+			if(m.contains("empty result set") || m.contains("ResultSet closed") || m.contains("[2000-")) return last;
+			plugin.getLogger().log(Level.WARNING, "Unable to get last total for "+player.getName()+" on "+type+" of "+board, e);
+		}
 		return last;
+	}
+
+	/**
+	 * Fetch all last totals for a player on a board in a single query instead of one per TimedType.
+	 */
+	public Map<TimedType, Double> getAllLastTotals(String board, OfflinePlayer player) {
+		Map<TimedType, Double> result = new HashMap<>();
+		StringBuilder columns = new StringBuilder();
+		List<TimedType> types = new ArrayList<>();
+		for (TimedType type : TimedType.values()) {
+			if (type == TimedType.ALLTIME) continue;
+			types.add(type);
+			if (columns.length() > 0) columns.append(",");
+			columns.append(q).append(type.lowerName()).append("_lasttotal").append(q);
+		}
+		String sql = String.format(
+				method.formatStatement("select " + columns + " from '%s' where 'id'=?"),
+				tablePrefix + board
+		);
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setString(1, player.getUniqueId().toString());
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					for (int i = 0; i < types.size(); i++) {
+						double val = rs.getDouble(i + 1);
+						result.put(types.get(i), rs.wasNull() ? null : val);
+					}
+				}
+			}
+		} catch (SQLException e) {
+			String m = e.getMessage();
+			if (!m.contains("empty result set") && !m.contains("ResultSet closed") && !m.contains("[2000-")) {
+				plugin.getLogger().log(Level.WARNING, "Unable to get last totals for " + player.getName() + " on " + board, e);
+			}
+		}
+		return result;
 	}
 
 	public long getLastReset(String board, TimedType type) {
 		long last = 0;
-		try {
-			Connection conn = method.getConnection();
-			try {
-				PreparedStatement ps = conn.prepareStatement(String.format(
-						method.formatStatement(QUERY_LASTRESET),
-						type.lowerName()+"_timestamp",
-						tablePrefix+board
-				));
-
-				ResultSet rs = ps.executeQuery();
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(String.format(
+					method.formatStatement(QUERY_LASTRESET),
+					type.lowerName()+"_timestamp",
+					tablePrefix+board
+			))) {
+			try (ResultSet rs = ps.executeQuery()) {
 				if(method instanceof MysqlMethod || method instanceof H2Method) {
 					rs.next();
 				}
 				last = rs.getLong(1);
-				ps.close();
-				method.close(conn);
-			} catch(SQLException e) {
-				method.close(conn);
-				String m = e.getMessage();
-				if(m.contains("empty result set") || m.contains("ResultSet closed") || m.contains("[2000-")) return last;
-				plugin.getLogger().log(Level.WARNING, "Unable to get last reset for "+type+" of "+board, e);
 			}
-		} catch(SQLException ignored) {}
-
+		} catch(SQLException e) {
+			String m = e.getMessage();
+			if(m.contains("empty result set") || m.contains("ResultSet closed") || m.contains("[2000-")) return last;
+			plugin.getLogger().log(Level.WARNING, "Unable to get last reset for "+type+" of "+board, e);
+		}
 		return last;
 	}
 
