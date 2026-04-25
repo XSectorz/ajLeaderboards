@@ -12,6 +12,7 @@ import us.ajg0702.leaderboards.LeaderboardPlugin;
 import us.ajg0702.leaderboards.boards.StatEntry;
 import us.ajg0702.leaderboards.boards.TimedType;
 import us.ajg0702.utils.foliacompat.CompatScheduler;
+import us.ajg0702.utils.foliacompat.Task;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -19,6 +20,9 @@ import java.util.*;
 public class LeaderboardGUI {
 
     // ==================== CATEGORY DEFINITIONS ====================
+    // Boards that store time in ticks (statistic_play_one_minute)
+    private static final Set<String> TIME_BOARDS = new HashSet<>(Collections.singletonList("statistic_play_one_minute"));
+
     public static final CategoryDef[] CATEGORIES = {
         new CategoryDef("money",        "\u00A76\u00A7lMONEY",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
         new CategoryDef("kills",        "\u00A7c\u00A7lKILLS",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
@@ -33,8 +37,8 @@ public class LeaderboardGUI {
     };
 
     // Bottom row items
-    static final int TIME_TOGGLE_SLOT = 30;   // HOPPER — time type toggle
-    static final int REFRESH_INFO_SLOT = 32;  // CLOCK — refresh info
+    static final int TIME_TOGGLE_SLOT = 30;
+    static final int REFRESH_INFO_SLOT = 32;
 
     private static final TimedType[] TIME_CYCLE = {TimedType.ALLTIME, TimedType.DAILY, TimedType.WEEKLY, TimedType.MONTHLY};
     private static final String[] TIME_LABELS = {
@@ -55,17 +59,45 @@ public class LeaderboardGUI {
 
             fillInventory(inv, type, player, plugin);
 
-            // Open on correct thread
+            Runnable openAndSchedule = () -> {
+                if (!player.isOnline()) return;
+                player.openInventory(inv);
+                // Start 1-second refresh for the clock item
+                startClockRefresh(player, inv, holder, plugin);
+            };
+
             if (CompatScheduler.isFolia()) {
-                plugin.getScheduler().runSync(player.getLocation(), () -> {
-                    if (player.isOnline()) player.openInventory(inv);
-                });
+                plugin.getScheduler().runSync(player.getLocation(), openAndSchedule);
             } else {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (player.isOnline()) player.openInventory(inv);
-                });
+                Bukkit.getScheduler().runTask(plugin, openAndSchedule);
             }
         });
+    }
+
+    /**
+     * Start a repeating task that updates only the CLOCK item every second.
+     */
+    private static void startClockRefresh(Player player, Inventory inv, LeaderboardHolder holder, LeaderboardPlugin plugin) {
+        Task task = plugin.getScheduler().runTaskTimerAsynchronously(() -> {
+            if (!player.isOnline() || player.getOpenInventory().getTopInventory() != inv) {
+                // Player closed the inventory — cancel
+                Task t = holder.getRefreshTask();
+                if (t != null) t.cancel();
+                return;
+            }
+            ItemStack clockItem = buildRefreshInfoItem(plugin.getRedisCache(), plugin);
+            Runnable apply = () -> {
+                if (player.isOnline() && player.getOpenInventory().getTopInventory() == inv) {
+                    inv.setItem(REFRESH_INFO_SLOT, clockItem);
+                }
+            };
+            if (CompatScheduler.isFolia()) {
+                plugin.getScheduler().runSync(player.getLocation(), apply);
+            } else {
+                Bukkit.getScheduler().runTask(plugin, apply);
+            }
+        }, 20L, 20L); // every 1 second
+        holder.setRefreshTask(task);
     }
 
     /**
@@ -73,11 +105,9 @@ public class LeaderboardGUI {
      */
     static void updateInventory(Player player, Inventory inv, TimedType type, LeaderboardPlugin plugin) {
         plugin.getScheduler().runTaskAsynchronously(() -> {
-            // Build all items on async thread
             final ItemStack[] built = new ItemStack[INVENTORY_SIZE];
             buildItems(built, type, player, plugin);
 
-            // Apply on main thread
             Runnable applyTask = () -> {
                 if (!player.isOnline()) return;
                 for (int i = 0; i < INVENTORY_SIZE; i++) {
@@ -103,7 +133,6 @@ public class LeaderboardGUI {
     }
 
     private static void buildItems(ItemStack[] slots, TimedType type, Player player, LeaderboardPlugin plugin) {
-        // Fill background
         ItemStack filler = createItem(Material.BLACK_STAINED_GLASS_PANE, " ", null);
         for (int i = 0; i < slots.length; i++) {
             slots[i] = filler;
@@ -111,17 +140,49 @@ public class LeaderboardGUI {
 
         LeaderboardRedisCache redisCache = plugin.getRedisCache();
 
-        // Category items
         for (CategoryDef cat : CATEGORIES) {
             List<String> lore = buildCategoryLore(cat, type, player, plugin, redisCache);
             slots[cat.slot] = createItem(cat.icon, cat.displayName, lore);
         }
 
-        // HOPPER — time type toggle
         slots[TIME_TOGGLE_SLOT] = buildTimeToggleItem(type);
-
-        // CLOCK — refresh info
         slots[REFRESH_INFO_SLOT] = buildRefreshInfoItem(redisCache, plugin);
+    }
+
+    // ==================== SCORE FORMATTING ====================
+
+    /**
+     * Format score for display. Uses time format for time-based boards (ticks → Thai time string).
+     */
+    static String formatScore(double score, String boardName) {
+        if (TIME_BOARDS.contains(boardName)) {
+            return formatTicksToTime(score);
+        }
+        return StatEntry.formatDouble(score);
+    }
+
+    /**
+     * Format Minecraft ticks to Thai time string.
+     * statistic_play_one_minute stores ticks (20 ticks = 1 second)
+     */
+    private static String formatTicksToTime(double ticks) {
+        long totalSeconds = Math.round(ticks / 20.0);
+        long weeks = totalSeconds / 604800;
+        long days = (totalSeconds % 604800) / 86400;
+        long hours = (totalSeconds % 86400) / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        // สัปดาห์=สป. วัน=ว. ชั่วโมง=ชม. นาที=น. วินาที=วิ.
+        if (weeks > 0) {
+            return weeks + "\u0E2A\u0E1B. " + days + "\u0E27."; // Xสป. Yว.
+        } else if (days > 0) {
+            return days + "\u0E27. " + hours + "\u0E0A\u0E21."; // Xว. Yชม.
+        } else if (hours > 0) {
+            return hours + "\u0E0A\u0E21. " + minutes + "\u0E19."; // Xชม. Yน.
+        } else {
+            return minutes + "\u0E19. " + seconds + "\u0E27\u0E34."; // Xน. Yวิ.
+        }
     }
 
     // ==================== TIME TOGGLE (HOPPER) ====================
@@ -129,8 +190,6 @@ public class LeaderboardGUI {
     @SuppressWarnings("deprecation")
     private static ItemStack buildTimeToggleItem(TimedType current) {
         int idx = getTimeIndex(current);
-
-        // Title is always "การจัดเรียง" (no bold for TH)
         String title = "\u00A7e\u0E01\u0E32\u0E23\u0E08\u0E31\u0E14\u0E40\u0E23\u0E35\u0E22\u0E07"; // §eการจัดเรียง
 
         List<String> lore = new ArrayList<>();
@@ -143,7 +202,7 @@ public class LeaderboardGUI {
             }
         }
         lore.add("");
-        lore.add("\u00A77\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // §7คลิกเพื่อเปลี่ยน
+        lore.add("\u00A77\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19");
 
         ItemStack item = createItem(Material.HOPPER, title, lore);
         ItemMeta meta = item.getItemMeta();
@@ -170,7 +229,7 @@ public class LeaderboardGUI {
     // ==================== REFRESH INFO (CLOCK) ====================
 
     private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache, LeaderboardPlugin plugin) {
-        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"; // §3รีเฟรชข้อมูล
+        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25";
 
         List<String> lore = new ArrayList<>();
         lore.add("");
@@ -180,24 +239,23 @@ public class LeaderboardGUI {
             int intervalMin = redisCache.getRefreshIntervalMinutes();
 
             if (lastRefresh == 0) {
-                lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01..."); // §7รอการรีเฟรชครั้งแรก...
+                lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01...");
             } else {
                 long nextRefresh = lastRefresh + (intervalMin * 60L * 1000L);
                 long remaining = nextRefresh - System.currentTimeMillis();
 
                 if (remaining <= 0) {
-                    lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A..."); // §aกำลังรีเฟรช...
+                    lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A...");
                 } else {
-                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining)); // §7รีเฟรชถัดไปใน:
+                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining));
                 }
-                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh)); // §7อัพเดทล่าสุด:
+                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh));
             }
         } else {
-            // No Redis — use stat-refresh interval as countdown reference
             int statRefreshTicks = plugin.getAConfig().getInt("stat-refresh");
             int statRefreshSec = statRefreshTicks / 20;
-            lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: \u00A7f" + statRefreshSec + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"); // §7รีเฟรชทุก: §fX วินาที
-            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34"); // §7ข้อมูลอัพเดทอัตโนมัติ
+            lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: \u00A7f" + statRefreshSec + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35");
+            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34");
         }
 
         return createItem(Material.CLOCK, title, lore);
@@ -210,21 +268,21 @@ public class LeaderboardGUI {
         long seconds = totalSeconds % 60;
 
         if (hours > 0) {
-            return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07 " + minutes + " \u0E19\u0E32\u0E17\u0E35"; // X ชั่วโมง Y นาที
+            return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07 " + minutes + " \u0E19\u0E32\u0E17\u0E35";
         } else if (minutes > 0) {
-            return minutes + " \u0E19\u0E32\u0E17\u0E35 " + seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"; // X นาที Y วินาที
+            return minutes + " \u0E19\u0E32\u0E17\u0E35 " + seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35";
         } else {
-            return seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"; // X วินาที
+            return seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35";
         }
     }
 
     private static String formatRelativeTime(long epochMillis) {
         long diff = System.currentTimeMillis() - epochMillis;
         long minutes = diff / 60000;
-        if (minutes < 1) return "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E31\u0E01\u0E04\u0E23\u0E39\u0E48"; // เมื่อสักครู่
-        if (minutes < 60) return minutes + " \u0E19\u0E32\u0E17\u0E35\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27"; // นาทีที่แล้ว
+        if (minutes < 1) return "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E31\u0E01\u0E04\u0E23\u0E39\u0E48";
+        if (minutes < 60) return minutes + " \u0E19\u0E32\u0E17\u0E35\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27";
         long hours = minutes / 60;
-        return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27"; // ชั่วโมงที่แล้ว
+        return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27";
     }
 
     // ==================== CATEGORY LORE ====================
@@ -247,10 +305,10 @@ public class LeaderboardGUI {
         boolean usedRedis = false;
         if (redisCache != null && redisCache.isEnabled()) {
             List<LeaderboardRedisCache.CachedEntry> top10 = redisCache.getTop10(cat.boardName, type);
-            if (top10 != null) {
+            if (top10 != null && !top10.isEmpty()) {
                 usedRedis = true;
                 for (LeaderboardRedisCache.CachedEntry e : top10) {
-                    String score = StatEntry.formatDouble(e.score);
+                    String score = formatScore(e.score, cat.boardName);
                     lore.add("\u00A7e#" + e.position + " \u00A7f" + e.name + " \u00A77- \u00A7a" + score);
                 }
                 for (int pos = top10.size() + 1; pos <= 10; pos++) {
@@ -260,7 +318,6 @@ public class LeaderboardGUI {
         }
 
         if (!usedRedis) {
-            // Fallback: TopManager cache → DB (only if board exists)
             boolean boardExists = plugin.getTopManager().boardExists(cat.boardName);
             for (int pos = 1; pos <= 10; pos++) {
                 if (!boardExists) {
@@ -272,7 +329,7 @@ public class LeaderboardGUI {
                     entry = plugin.getCache().getStat(pos, cat.boardName, type);
                 }
                 if (entry != null && entry.hasPlayer()) {
-                    String score = StatEntry.formatDouble(entry.getScore());
+                    String score = formatScore(entry.getScore(), cat.boardName);
                     lore.add("\u00A7e#" + pos + " \u00A7f" + entry.getPlayerName() + " \u00A77- \u00A7a" + score);
                 } else {
                     lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
@@ -292,7 +349,6 @@ public class LeaderboardGUI {
         }
 
         if (posText == null && plugin.getTopManager().boardExists(cat.boardName)) {
-            // Fallback (only if board exists)
             StatEntry playerEntry = plugin.getTopManager().getCachedStatEntry(player, cat.boardName, type, false);
             if (playerEntry == null || !playerEntry.hasPlayer() || playerEntry.getPosition() <= 0) {
                 playerEntry = plugin.getCache().getStatEntry(player, cat.boardName, type);

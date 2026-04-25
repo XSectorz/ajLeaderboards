@@ -68,7 +68,7 @@ public class ProfileGUI {
         if (redisCache != null && redisCache.isEnabled()) {
             LeaderboardRedisCache.CachedEntry entry = redisCache.getPlayerPosition(target, cat.boardName, TimedType.ALLTIME);
             if (entry != null && entry.position > 0) {
-                String value = StatEntry.formatDouble(entry.score);
+                String value = LeaderboardGUI.formatScore(entry.score, cat.boardName);
                 String pos = NumberFormat.getNumberInstance(Locale.US).format(entry.position);
                 lore.add("\u00A7f" + value + " \u00A77#" + pos);
                 return lore;
@@ -85,7 +85,7 @@ public class ProfileGUI {
             entry = plugin.getCache().getStatEntry(target, cat.boardName, TimedType.ALLTIME);
         }
         if (entry != null && entry.hasPlayer() && entry.getPosition() > 0) {
-            String value = StatEntry.formatDouble(entry.getScore());
+            String value = LeaderboardGUI.formatScore(entry.getScore(), cat.boardName);
             String pos = NumberFormat.getNumberInstance(Locale.US).format(entry.getPosition());
             lore.add("\u00A7f" + value + " \u00A77#" + pos);
         } else {

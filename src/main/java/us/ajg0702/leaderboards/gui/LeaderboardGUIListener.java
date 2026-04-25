@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import us.ajg0702.leaderboards.LeaderboardPlugin;
 import us.ajg0702.leaderboards.boards.TimedType;
@@ -27,7 +28,6 @@ public class LeaderboardGUIListener implements Listener {
             int slot = event.getRawSlot();
             if (slot < 0 || slot >= event.getInventory().getSize()) return;
 
-            // Time toggle button clicked — update in-place
             if (slot == LeaderboardGUI.TIME_TOGGLE_SLOT) {
                 LeaderboardHolder holder = (LeaderboardHolder) event.getInventory().getHolder();
                 TimedType next = LeaderboardGUI.getNextTimeType(holder.getCurrentType());
@@ -38,6 +38,13 @@ public class LeaderboardGUIListener implements Listener {
 
         if (event.getInventory().getHolder() instanceof ProfileHolder) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getInventory().getHolder() instanceof LeaderboardHolder) {
+            ((LeaderboardHolder) event.getInventory().getHolder()).cancelRefreshTask();
         }
     }
 
