@@ -1,7 +1,6 @@
 package us.ajg0702.leaderboards.gui;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -25,7 +24,7 @@ public class LeaderboardGUI {
     // Set boardName to null for mock/placeholder categories (e.g. Sell, Buy)
 
     static final CategoryDef[] CATEGORIES = {
-        new CategoryDef("money",        "\u00A76\u00A7lMONEY",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "rediseco_bal_vault",     Material.EMERALD,          11),
+        new CategoryDef("money",        "\u00A76\u00A7lMONEY",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
         new CategoryDef("kills",        "\u00A7c\u00A7lKILLS",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
         new CategoryDef("deaths",       "\u00A74\u00A7lDEATHS",        "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
         new CategoryDef("playtime",     "\u00A7b\u00A7lPLAYTIME",      "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E48\u0E19\u0E19\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_play_one_minute", Material.CLOCK,           14),
@@ -37,16 +36,16 @@ public class LeaderboardGUI {
         new CategoryDef("buy",          "\u00A73\u00A7lBUY",           "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E0B\u0E37\u0E49\u0E2D\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.DIAMOND,          24)
     };
 
-    // Time type button config
-    private static final int[] TIME_SLOTS = {29, 30, 32, 33};
-    private static final TimedType[] TIME_TYPES = {TimedType.ALLTIME, TimedType.DAILY, TimedType.WEEKLY, TimedType.MONTHLY};
-    private static final String[] TIME_NAMES = {
-        "\u00A76\u00A7l\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14",       // ทั้งหมด
-        "\u00A7e\u00A7l\u0E23\u0E32\u0E22\u0E27\u0E31\u0E19",             // รายวัน
-        "\u00A7b\u00A7l\u0E23\u0E32\u0E22\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C", // รายสัปดาห์
-        "\u00A7d\u00A7l\u0E23\u0E32\u0E22\u0E40\u0E14\u0E37\u0E2D\u0E19"  // รายเดือน
+    // Time type toggle config - single CLOCK item at slot 31 (bottom row center)
+    static final int TIME_TOGGLE_SLOT = 31;
+    private static final TimedType[] TIME_CYCLE = {TimedType.ALLTIME, TimedType.DAILY, TimedType.WEEKLY, TimedType.MONTHLY};
+    private static final String[] TIME_LABELS = {
+        "\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14",           // ทั้งหมด
+        "\u0E23\u0E32\u0E22\u0E27\u0E31\u0E19",                 // รายวัน
+        "\u0E23\u0E32\u0E22\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C",   // รายสัปดาห์
+        "\u0E23\u0E32\u0E22\u0E40\u0E14\u0E37\u0E2D\u0E19"      // รายเดือน
     };
-    private static final Material[] TIME_MATERIALS = {Material.NETHER_STAR, Material.SUNFLOWER, Material.CLOCK, Material.COMPASS};
+    private static final String[] TIME_COLORS = {"\u00A76", "\u00A7e", "\u00A7b", "\u00A7d"};
 
     private static final int INVENTORY_SIZE = 36; // 4 rows
     private static final String INVENTORY_TITLE = "\u00A78\u00A7lLEADERBOARD";
@@ -69,21 +68,8 @@ public class LeaderboardGUI {
                 inv.setItem(cat.slot, item);
             }
 
-            // Add time type selector buttons
-            for (int i = 0; i < TIME_TYPES.length; i++) {
-                List<String> timeLore = new ArrayList<>();
-                boolean selected = TIME_TYPES[i] == type;
-                if (selected) {
-                    timeLore.add("\u00A7a\u25BA \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E22\u0E39\u0E48"); // ► เลือกอยู่
-                } else {
-                    timeLore.add("\u00A77\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // คลิกเพื่อเปลี่ยน
-                }
-                ItemStack timeItem = createItem(TIME_MATERIALS[i], TIME_NAMES[i], timeLore);
-                if (selected) {
-                    addGlow(timeItem);
-                }
-                inv.setItem(TIME_SLOTS[i], timeItem);
-            }
+            // Add single time toggle button (CLOCK)
+            inv.setItem(TIME_TOGGLE_SLOT, buildTimeToggleItem(type));
 
             // Open inventory on the correct thread
             if (CompatScheduler.isFolia()) {
@@ -102,6 +88,45 @@ public class LeaderboardGUI {
         });
     }
 
+    @SuppressWarnings("deprecation")
+    private static ItemStack buildTimeToggleItem(TimedType current) {
+        int idx = getTimeIndex(current);
+        String currentLabel = TIME_COLORS[idx] + "\u00A7l" + TIME_LABELS[idx];
+
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        for (int i = 0; i < TIME_CYCLE.length; i++) {
+            if (i == idx) {
+                lore.add(" \u00A7a\u25B6 " + TIME_COLORS[i] + TIME_LABELS[i] + " \u00A7a\u25C0");
+            } else {
+                lore.add(" \u00A78  " + TIME_LABELS[i]);
+            }
+        }
+        lore.add("");
+        lore.add("\u00A7e\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // คลิกเพื่อเปลี่ยน
+
+        ItemStack item = createItem(Material.CLOCK, currentLabel, lore);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.addEnchant(Enchantment.DURABILITY, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    static TimedType getNextTimeType(TimedType current) {
+        int idx = getTimeIndex(current);
+        return TIME_CYCLE[(idx + 1) % TIME_CYCLE.length];
+    }
+
+    private static int getTimeIndex(TimedType type) {
+        for (int i = 0; i < TIME_CYCLE.length; i++) {
+            if (TIME_CYCLE[i] == type) return i;
+        }
+        return 0;
+    }
+
     private static List<String> buildCategoryLore(CategoryDef cat, TimedType type, Player player, LeaderboardPlugin plugin) {
         List<String> lore = new ArrayList<>();
         lore.add(cat.description);
@@ -114,26 +139,31 @@ public class LeaderboardGUI {
             lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7fN/A"); // → อันดับของคุณอยู่ที่: N/A
             lore.add("\u00A78(\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E31\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07)"); // (ข้อมูลตัวอย่าง)
         } else {
-            // Real data from TopManager
+            // Try TopManager cache first, fallback to DB only if cache returns loading
             for (int pos = 1; pos <= 10; pos++) {
-                StatEntry entry = plugin.getTopManager().getStat(pos, cat.boardName, type);
+                StatEntry entry = plugin.getTopManager().getCachedStat(pos, cat.boardName, type);
+                if (entry == null || !entry.hasPlayer()) {
+                    // Cache miss — fetch from DB directly (we're on async thread)
+                    entry = plugin.getCache().getStat(pos, cat.boardName, type);
+                }
                 if (entry != null && entry.hasPlayer()) {
-                    String score = entry.getScoreFormatted();
+                    String score = StatEntry.formatDouble(entry.getScore());
                     lore.add("\u00A7e#" + pos + " \u00A7f" + entry.getPlayerName() + " \u00A77- \u00A7a" + score);
                 } else {
-                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14..."); // กำลังโหลด...
+                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"); // ไม่มีข้อมูล
                 }
             }
 
             lore.add("");
 
-            // Player's own position
-            StatEntry playerEntry = plugin.getTopManager().getStatEntry(player, cat.boardName, type);
+            // Player's own position — cache first, DB fallback
+            StatEntry playerEntry = plugin.getTopManager().getCachedStatEntry(player, cat.boardName, type, false);
+            if (playerEntry == null || !playerEntry.hasPlayer() || playerEntry.getPosition() <= 0) {
+                playerEntry = plugin.getCache().getStatEntry(player, cat.boardName, type);
+            }
             if (playerEntry != null && playerEntry.hasPlayer() && playerEntry.getPosition() > 0) {
                 String posFormatted = NumberFormat.getNumberInstance(Locale.US).format(playerEntry.getPosition());
                 lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7f#" + posFormatted);
-            } else if (playerEntry != null && playerEntry.getPosition() == -2) {
-                lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A77\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14..."); // กำลังโหลด...
             } else {
                 lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7fN/A");
             }
@@ -166,13 +196,6 @@ public class LeaderboardGUI {
         return lines;
     }
 
-    static TimedType getTimeTypeForSlot(int slot) {
-        for (int i = 0; i < TIME_SLOTS.length; i++) {
-            if (TIME_SLOTS[i] == slot) return TIME_TYPES[i];
-        }
-        return null;
-    }
-
     static ItemStack createItem(Material material, String name, List<String> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -186,16 +209,6 @@ public class LeaderboardGUI {
             item.setItemMeta(meta);
         }
         return item;
-    }
-
-    @SuppressWarnings("deprecation")
-    private static void addGlow(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.addEnchant(Enchantment.DURABILITY, 1, true);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            item.setItemMeta(meta);
-        }
     }
 
     static class CategoryDef {

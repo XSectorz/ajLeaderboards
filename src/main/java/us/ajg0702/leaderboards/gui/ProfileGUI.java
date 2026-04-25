@@ -16,9 +16,9 @@ import java.util.*;
 
 public class ProfileGUI {
 
-    private static final int INVENTORY_SIZE = 27; // 3 rows
-    // Slots matching the leaderboard layout (rows 1 and 2 of a 3-row chest)
-    private static final int[] CATEGORY_SLOTS = {2, 3, 4, 5, 6, 11, 12, 13, 14, 15};
+    private static final int INVENTORY_SIZE = 36; // 4 rows
+    // Slots matching the leaderboard layout
+    private static final int[] CATEGORY_SLOTS = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24};
 
     public static void open(Player viewer, OfflinePlayer target, LeaderboardPlugin plugin) {
         String targetName = target.getName() != null ? target.getName() : "???";
@@ -68,13 +68,15 @@ public class ProfileGUI {
             lore.add("\u00A7fN/A \u00A77#N/A");
             lore.add("\u00A78(\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E31\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07)"); // (ข้อมูลตัวอย่าง)
         } else {
-            StatEntry entry = plugin.getTopManager().getStatEntry(target, cat.boardName, TimedType.ALLTIME);
+            // Cache first, DB fallback (already on async thread)
+            StatEntry entry = plugin.getTopManager().getCachedStatEntry(target, cat.boardName, TimedType.ALLTIME, false);
+            if (entry == null || !entry.hasPlayer() || entry.getPosition() <= 0) {
+                entry = plugin.getCache().getStatEntry(target, cat.boardName, TimedType.ALLTIME);
+            }
             if (entry != null && entry.hasPlayer() && entry.getPosition() > 0) {
-                String value = StatEntry.addCommas(entry.getScore());
+                String value = StatEntry.formatDouble(entry.getScore());
                 String pos = NumberFormat.getNumberInstance(Locale.US).format(entry.getPosition());
                 lore.add("\u00A7f" + value + " \u00A77#" + pos);
-            } else if (entry != null && entry.getPosition() == -2) {
-                lore.add("\u00A77\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14..."); // กำลังโหลด...
             } else {
                 lore.add("\u00A7fN/A \u00A77#N/A");
             }
