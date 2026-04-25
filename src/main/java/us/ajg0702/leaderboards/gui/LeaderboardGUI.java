@@ -24,16 +24,16 @@ public class LeaderboardGUI {
     private static final Set<String> TIME_BOARDS = new HashSet<>(Collections.singletonList("statistic_play_one_minute"));
 
     public static final CategoryDef[] CATEGORIES = {
-        new CategoryDef("money",        "\u00A76\u00A7lMONEY",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
-        new CategoryDef("kills",        "\u00A7c\u00A7lKILLS",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
-        new CategoryDef("deaths",       "\u00A74\u00A7lDEATHS",        "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
-        new CategoryDef("playtime",     "\u00A7b\u00A7lPLAYTIME",      "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E48\u0E19\u0E19\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_play_one_minute", Material.COMPASS,         14),
-        new CategoryDef("fishing",      "\u00A79\u00A7lFISHING",       "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_fish_caught",    Material.FISHING_ROD,      15),
-        new CategoryDef("blocks_break", "\u00A7e\u00A7lBLOCKS BREAK",  "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_mine_block",     Material.DIAMOND_PICKAXE,  20),
-        new CategoryDef("blocks_place", "\u00A7a\u00A7lBLOCKS PLACE",  "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E27\u0E32\u0E07\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_use_item",       Material.BRICKS,           21),
-        new CategoryDef("mobs_kill",    "\u00A7d\u00A7lMOBS KILL",     "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E21\u0E2D\u0E1A\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_mob_kills",      Material.ZOMBIE_HEAD,      22),
-        new CategoryDef("sell",         "\u00A76\u00A7lSELL",          "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.GOLD_INGOT,       23),
-        new CategoryDef("buy",          "\u00A73\u00A7lBUY",           "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E0B\u0E37\u0E49\u0E2D\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.DIAMOND,          24)
+        new CategoryDef("money",        "\u00A76\u1D0D\u1D0F\u0274\u1D07\u028F",                             "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
+        new CategoryDef("kills",        "\u00A7c\u1D0B\u026A\u029F\u029F\ua731",                             "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
+        new CategoryDef("deaths",       "\u00A74\u1D05\u1D07\u1D00\u1D1B\u029C\ua731",                       "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
+        new CategoryDef("playtime",     "\u00A7b\u1D18\u029F\u1D00\u028F\u1D1B\u026A\u1D0D\u1D07",           "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E48\u0E19\u0E19\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_play_one_minute", Material.COMPASS,         14),
+        new CategoryDef("fishing",      "\u00A79\ua730\u026A\ua731\u029C\u026A\u0274\u0262",                  "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_fish_caught",    Material.FISHING_ROD,      15),
+        new CategoryDef("blocks_break", "\u00A7e\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u0299\u0280\u1D07\u1D00\u1D0B", "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_mine_block",     Material.DIAMOND_PICKAXE,  20),
+        new CategoryDef("blocks_place", "\u00A7a\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u1D18\u029F\u1D00\u1D04\u1D07", "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E27\u0E32\u0E07\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_use_item",       Material.BRICKS,           21),
+        new CategoryDef("mobs_kill",    "\u00A7d\u1D0D\u1D0F\u0299\ua731 \u1D0B\u026A\u029F\u029F",          "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E21\u0E2D\u0E1A\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_mob_kills",      Material.ZOMBIE_HEAD,      22),
+        new CategoryDef("sell",         "\u00A76\ua731\u1D07\u029F\u029F",                                    "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.GOLD_INGOT,       23),
+        new CategoryDef("buy",          "\u00A73\u0299\u1D1C\u028F",                                          "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E0B\u0E37\u0E49\u0E2D\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.DIAMOND,          24)
     };
 
     // Bottom row items
@@ -167,21 +167,23 @@ public class LeaderboardGUI {
      */
     private static String formatTicksToTime(double ticks) {
         long totalSeconds = Math.round(ticks / 20.0);
-        long weeks = totalSeconds / 604800;
+        long months = totalSeconds / 2592000; // ~30 days
+        long weeks = (totalSeconds % 2592000) / 604800;
         long days = (totalSeconds % 604800) / 86400;
         long hours = (totalSeconds % 86400) / 3600;
         long minutes = (totalSeconds % 3600) / 60;
         long seconds = totalSeconds % 60;
 
-        // สัปดาห์=สป. วัน=ว. ชั่วโมง=ชม. นาที=น. วินาที=วิ.
-        if (weeks > 0) {
-            return weeks + "\u0E2A\u0E1B. " + days + "\u0E27."; // Xสป. Yว.
+        if (months > 0) {
+            return months + " \u0E40\u0E14\u0E37\u0E2D\u0E19 " + weeks + " \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C"; // X เดือน Y สัปดาห์
+        } else if (weeks > 0) {
+            return weeks + " \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C " + days + " \u0E27\u0E31\u0E19"; // X สัปดาห์ Y วัน
         } else if (days > 0) {
-            return days + "\u0E27. " + hours + "\u0E0A\u0E21."; // Xว. Yชม.
+            return days + " \u0E27\u0E31\u0E19 " + hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07"; // X วัน Y ชั่วโมง
         } else if (hours > 0) {
-            return hours + "\u0E0A\u0E21. " + minutes + "\u0E19."; // Xชม. Yน.
+            return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07 " + minutes + " \u0E19\u0E32\u0E17\u0E35"; // X ชั่วโมง Y นาที
         } else {
-            return minutes + "\u0E19. " + seconds + "\u0E27\u0E34."; // Xน. Yวิ.
+            return minutes + " \u0E19\u0E32\u0E17\u0E35 " + seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"; // X นาที Y วินาที
         }
     }
 
