@@ -39,6 +39,7 @@ import us.ajg0702.leaderboards.nms.legacy.HeadUtils;
 import us.ajg0702.leaderboards.placeholders.PlaceholderExpansion;
 import us.ajg0702.leaderboards.gui.LeaderboardGUI;
 import us.ajg0702.leaderboards.gui.LeaderboardGUIListener;
+import us.ajg0702.leaderboards.gui.LeaderboardRedisCache;
 import us.ajg0702.leaderboards.gui.ProfileGUI;
 import us.ajg0702.leaderboards.gui.UUIDLookup;
 import us.ajg0702.leaderboards.utils.*;
@@ -79,6 +80,7 @@ public class LeaderboardPlugin extends JavaPlugin {
     private LuckpermsContextLoader contextLoader;
     private ResetSaver resetSaver;
     private UUIDLookup uuidLookup;
+    private LeaderboardRedisCache redisCache;
     private final Exporter exporter = new Exporter(this);
     private final PlaceholderFormatter placeholderFormatter = new PlaceholderFormatter(this);
 
@@ -221,6 +223,18 @@ public class LeaderboardPlugin extends JavaPlugin {
         uuidLookup = new UUIDLookup(this);
         uuidLookup.init();
 
+        // Initialize Redis leaderboard cache
+        redisCache = new LeaderboardRedisCache(this);
+        redisCache.init();
+        if (redisCache.isEnabled() && redisCache.isWriter()) {
+            long intervalTicks = redisCache.getRefreshIntervalMinutes() * 60L * 20L;
+            getScheduler().runTaskTimerAsynchronously(() -> {
+                if (!isShuttingDown()) {
+                    redisCache.refreshAll();
+                }
+            }, 5 * 20L, intervalTicks); // first run after 5 seconds, then every interval
+        }
+
         // Register /leaderboard command
         if (getCommand("leaderboard") != null) {
             getCommand("leaderboard").setExecutor((sender, command, label, args) -> {
@@ -319,6 +333,7 @@ public class LeaderboardPlugin extends JavaPlugin {
         getScheduler().cancelTasks();
         if(getTopManager() != null) getTopManager().shutdown();
         if(uuidLookup != null) uuidLookup.shutdown();
+        if(redisCache != null) redisCache.shutdown();
 
         if(getCache() != null) {
             ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -445,6 +460,10 @@ public class LeaderboardPlugin extends JavaPlugin {
 
     public UUIDLookup getUuidLookup() {
         return uuidLookup;
+    }
+
+    public LeaderboardRedisCache getRedisCache() {
+        return redisCache;
     }
 
     public CompatScheduler getCompatScheduler() {

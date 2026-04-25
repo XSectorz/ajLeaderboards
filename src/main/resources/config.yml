@@ -249,6 +249,39 @@ redis.password: ""
 redis.server-name: "server"
 
 
+# ===== Redis Leaderboard Cache =====
+# Caches leaderboard data (top 10, player positions) in Redis for instant GUI loading.
+# All servers in the same group share this cache — no DB queries needed for /leaderboard or /profile.
+# This is a SEPARATE Redis connection from the UUID lookup above.
+
+# Enable Redis leaderboard cache
+#  Default: false
+redis-cache.enabled: false
+
+# Redis cache server host
+#  Default: ""
+redis-cache.host: ""
+
+# Redis cache server port
+#  Default: 6379
+redis-cache.port: 6379
+
+# Redis cache server password (leave empty if no password)
+#  Default: ""
+redis-cache.password: ""
+
+# Should this server be the WRITER (refresh data from DB to Redis)?
+# Only ONE server in your network should have this set to true.
+# Other servers should set this to false (reader mode — only reads from Redis).
+#  Default: false
+redis-cache.writer: false
+
+# How often (in minutes) should the writer server refresh data from DB to Redis?
+# Only applies when redis-cache.writer is true.
+#  Default: 60
+redis-cache.refresh-interval: 60
+
+
 # # # # # # # # # # # # # # # # # # # # # # #
 #                                           #
 #  End of config. Happy leaderboard-ing :)  #
