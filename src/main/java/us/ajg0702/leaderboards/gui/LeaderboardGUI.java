@@ -46,7 +46,7 @@ public class LeaderboardGUI {
     private static final String[] TIME_COLORS = {"\u00A76", "\u00A7e", "\u00A7b", "\u00A7d"};
 
     private static final int INVENTORY_SIZE = 36;
-    private static final String INVENTORY_TITLE = "\u00A78\u00A7lLEADERBOARD";
+    private static final String INVENTORY_TITLE = "\u00A78\u029F\u1D07\u1D00\u1D05\u1D07\u0280\u0299\u1D0F\u1D00\u0280\u1D05";
 
     public static void open(Player player, TimedType type, LeaderboardPlugin plugin) {
         plugin.getScheduler().runTaskAsynchronously(() -> {
@@ -92,21 +92,23 @@ public class LeaderboardGUI {
     @SuppressWarnings("deprecation")
     private static ItemStack buildTimeToggleItem(TimedType current) {
         int idx = getTimeIndex(current);
-        String currentLabel = TIME_COLORS[idx] + "\u00A7l" + TIME_LABELS[idx];
+
+        // Title is always "การจัดเรียง" (no bold for TH)
+        String title = "\u00A7e\u0E01\u0E32\u0E23\u0E08\u0E31\u0E14\u0E40\u0E23\u0E35\u0E22\u0E07"; // §eการจัดเรียง
 
         List<String> lore = new ArrayList<>();
         lore.add("");
         for (int i = 0; i < TIME_CYCLE.length; i++) {
             if (i == idx) {
-                lore.add(" \u00A7a\u25B6 " + TIME_COLORS[i] + TIME_LABELS[i] + " \u00A7a\u25C0");
+                lore.add(" \u00A7a\u25B6 " + TIME_COLORS[i] + TIME_LABELS[i]);
             } else {
-                lore.add(" \u00A78  " + TIME_LABELS[i]);
+                lore.add(" \u00A78  \u00A77" + TIME_LABELS[i]);
             }
         }
         lore.add("");
-        lore.add("\u00A7e\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // คลิกเพื่อเปลี่ยน
+        lore.add("\u00A77\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // §7คลิกเพื่อเปลี่ยน
 
-        ItemStack item = createItem(Material.HOPPER, currentLabel, lore);
+        ItemStack item = createItem(Material.HOPPER, title, lore);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -131,28 +133,56 @@ public class LeaderboardGUI {
     // ==================== REFRESH INFO (CLOCK) ====================
 
     private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache) {
+        // Title: §3รีเฟรชข้อมูล (no bold for TH, modern aqua color)
+        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25";
+
         List<String> lore = new ArrayList<>();
         lore.add("");
 
         if (redisCache != null && redisCache.isEnabled()) {
             long lastRefresh = redisCache.getLastRefreshTime();
-            String lastRefreshText;
+            int intervalMin = redisCache.getRefreshIntervalMinutes();
+
             if (lastRefresh == 0) {
-                lastRefreshText = "\u00A77\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E40\u0E04\u0E22\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A"; // ยังไม่เคยรีเฟรช
+                // Never refreshed yet
+                lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01..."); // §7รอการรีเฟรชครั้งแรก...
             } else {
-                lastRefreshText = "\u00A7f" + formatRelativeTime(lastRefresh);
+                // Calculate countdown
+                long nextRefresh = lastRefresh + (intervalMin * 60L * 1000L);
+                long remaining = nextRefresh - System.currentTimeMillis();
+
+                if (remaining <= 0) {
+                    lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A..."); // §aกำลังรีเฟรช...
+                } else {
+                    String countdown = formatCountdown(remaining);
+                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + countdown); // §7รีเฟรชถัดไปใน: §f...
+                }
+
+                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh)); // §7อัพเดทล่าสุด: §f...
             }
 
-            lore.add("\u00A77\u0E2A\u0E16\u0E32\u0E19\u0E30: \u00A7a\u0E40\u0E0A\u0E37\u0E48\u0E2D\u0E21\u0E15\u0E48\u0E2D Redis \u0E41\u0E25\u0E49\u0E27"); // สถานะ: เชื่อมต่อ Redis แล้ว
-            lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: " + lastRefreshText); // อัพเดทล่าสุด:
-            lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: \u00A7f" + redisCache.getRefreshIntervalMinutes() + " \u0E19\u0E32\u0E17\u0E35"); // รีเฟรชทุก: X นาที
+            lore.add("");
+            lore.add("\u00A78\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01 " + intervalMin + " \u0E19\u0E32\u0E17\u0E35"); // §8รีเฟรชทุก X นาที
         } else {
-            lore.add("\u00A77\u0E42\u0E2B\u0E25\u0E14\u0E08\u0E32\u0E01\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E14\u0E22\u0E15\u0E23\u0E07"); // โหลดจากฐานข้อมูลโดยตรง
+            lore.add("\u00A77\u0E42\u0E2B\u0E25\u0E14\u0E08\u0E32\u0E01\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E14\u0E22\u0E15\u0E23\u0E07"); // §7โหลดจากฐานข้อมูลโดยตรง
         }
 
-        return createItem(Material.CLOCK,
-                "\u00A7b\u00A7l\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25", // §b§lรีเฟรชข้อมูล
-                lore);
+        return createItem(Material.CLOCK, title, lore);
+    }
+
+    private static String formatCountdown(long millis) {
+        long totalSeconds = millis / 1000;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07 " + minutes + " \u0E19\u0E32\u0E17\u0E35"; // X ชั่วโมง Y นาที
+        } else if (minutes > 0) {
+            return minutes + " \u0E19\u0E32\u0E17\u0E35 " + seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"; // X นาที Y วินาที
+        } else {
+            return seconds + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"; // X วินาที
+        }
     }
 
     private static String formatRelativeTime(long epochMillis) {
@@ -197,8 +227,13 @@ public class LeaderboardGUI {
         }
 
         if (!usedRedis) {
-            // Fallback: TopManager cache → DB
+            // Fallback: TopManager cache → DB (only if board exists)
+            boolean boardExists = plugin.getTopManager().boardExists(cat.boardName);
             for (int pos = 1; pos <= 10; pos++) {
+                if (!boardExists) {
+                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
+                    continue;
+                }
                 StatEntry entry = plugin.getTopManager().getCachedStat(pos, cat.boardName, type);
                 if (entry == null || !entry.hasPlayer()) {
                     entry = plugin.getCache().getStat(pos, cat.boardName, type);
@@ -223,8 +258,8 @@ public class LeaderboardGUI {
             }
         }
 
-        if (posText == null) {
-            // Fallback
+        if (posText == null && plugin.getTopManager().boardExists(cat.boardName)) {
+            // Fallback (only if board exists)
             StatEntry playerEntry = plugin.getTopManager().getCachedStatEntry(player, cat.boardName, type, false);
             if (playerEntry == null || !playerEntry.hasPlayer() || playerEntry.getPosition() <= 0) {
                 playerEntry = plugin.getCache().getStatEntry(player, cat.boardName, type);

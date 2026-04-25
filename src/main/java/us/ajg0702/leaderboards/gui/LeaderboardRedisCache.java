@@ -76,21 +76,35 @@ public class LeaderboardRedisCache {
 
     /**
      * Refresh all leaderboard data from DB into Redis.
-     * Only runs on writer servers.
+     * Only runs on writer servers. Batches queries with delays to avoid DB overload.
      */
     public void refreshAll() {
         if (!enabled || !writer) return;
+        if (plugin.isShuttingDown()) return;
 
         long start = System.currentTimeMillis();
         int count = 0;
+        int skipped = 0;
+
+        // Get the list of boards that actually exist in the database
+        List<String> existingBoards = plugin.getCache().getBoards();
 
         for (LeaderboardGUI.CategoryDef cat : LeaderboardGUI.CATEGORIES) {
             if (cat.boardName == null) continue;
+            if (plugin.isShuttingDown()) return;
+
+            // Skip boards that don't exist in the database
+            if (!existingBoards.contains(cat.boardName)) {
+                skipped++;
+                continue;
+            }
 
             for (TimedType type : CACHED_TYPES) {
+                if (plugin.isShuttingDown()) return;
+
                 List<CachedEntry> entries = new ArrayList<>();
-                for (int pos = 1; pos <= 10; pos++) {
-                    try {
+                try {
+                    for (int pos = 1; pos <= 10; pos++) {
                         StatEntry stat = plugin.getCache().getStat(pos, cat.boardName, type);
                         if (stat != null && stat.hasPlayer()) {
                             entries.add(new CachedEntry(
@@ -100,11 +114,13 @@ public class LeaderboardRedisCache {
                                     pos
                             ));
                         }
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("Error fetching stat for " + cat.boardName + " pos " + pos + ": " + e.getMessage());
                     }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Error fetching stats for " + cat.boardName + "/" + type.lowerName() + ": " + e.getMessage());
+                    continue;
                 }
 
+                // Write to Redis
                 String key = KEY_PREFIX + "top:" + cat.boardName + ":" + type.lowerName();
                 try (Jedis jedis = jedisPool.getResource()) {
                     jedis.set(key, gson.toJson(entries.toArray(new CachedEntry[0])));
@@ -112,6 +128,22 @@ public class LeaderboardRedisCache {
                 } catch (Exception e) {
                     plugin.getLogger().warning("Failed to write Redis cache: " + key);
                 }
+
+                // Yield between each board+type to avoid DB pressure
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+
+            // Longer pause between different boards
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
         }
 
@@ -121,7 +153,8 @@ public class LeaderboardRedisCache {
         } catch (Exception ignored) {}
 
         long took = System.currentTimeMillis() - start;
-        plugin.getLogger().info("Redis cache refreshed: " + count + " boards in " + took + "ms");
+        plugin.getLogger().info("Redis cache refreshed: " + count + " entries in " + took + "ms" +
+                (skipped > 0 ? " (" + skipped + " boards not found - add them via /ajlb add)" : ""));
     }
 
     /**
@@ -144,7 +177,7 @@ public class LeaderboardRedisCache {
 
     /**
      * Get a player's position on a board.
-     * Checks Redis cache first, then queries DB and caches the result.
+     * Checks Redis cache first, then queries DB and caches the result with TTL.
      */
     public CachedEntry getPlayerPosition(OfflinePlayer player, String board, TimedType type) {
         if (!enabled) return null;
@@ -152,13 +185,18 @@ public class LeaderboardRedisCache {
         String uuid = player.getUniqueId().toString();
         String key = KEY_PREFIX + "player:" + uuid + ":" + board + ":" + type.lowerName();
 
-        // Try Redis cache
+        // Try Redis cache first
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get(key);
             if (json != null) {
                 return gson.fromJson(json, CachedEntry.class);
             }
         } catch (Exception ignored) {}
+
+        // Check if board exists before querying DB
+        if (!plugin.getTopManager().boardExists(board)) {
+            return null;
+        }
 
         // Cache miss — query DB and store with TTL
         try {

@@ -25,7 +25,7 @@ public class ProfileGUI {
         plugin.getScheduler().runTaskAsynchronously(() -> {
             ProfileHolder holder = new ProfileHolder(target);
             Inventory inv = Bukkit.createInventory(holder, INVENTORY_SIZE,
-                    "\u00A78\u00A7lSTATS \u00A78- \u00A7f" + targetName.toUpperCase());
+                    "\u00A78\ua731\u1D1B\u1D00\u1D1B\ua731 \u00A78- \u00A7f" + targetName);
 
             ItemStack filler = LeaderboardGUI.createItem(Material.BLACK_STAINED_GLASS_PANE, " ", null);
             for (int i = 0; i < INVENTORY_SIZE; i++) {
@@ -75,7 +75,11 @@ public class ProfileGUI {
             }
         }
 
-        // Fallback: TopManager cache → DB
+        // Fallback: TopManager cache → DB (only if board exists)
+        if (!plugin.getTopManager().boardExists(cat.boardName)) {
+            lore.add("\u00A7fN/A \u00A77#N/A");
+            return lore;
+        }
         StatEntry entry = plugin.getTopManager().getCachedStatEntry(target, cat.boardName, TimedType.ALLTIME, false);
         if (entry == null || !entry.hasPlayer() || entry.getPosition() <= 0) {
             entry = plugin.getCache().getStatEntry(target, cat.boardName, TimedType.ALLTIME);
