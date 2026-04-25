@@ -36,6 +36,7 @@ public class MainCommand extends BaseCommand {
         addSubCommand(new Reset(plugin));
         addSubCommand(new UpdateAllOffline(plugin));
         addSubCommand(new Update(plugin));
+        addSubCommand(new ForceUpdate(plugin));
 
         // Debug commands
         addSubCommand(new Time());

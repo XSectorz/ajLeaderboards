@@ -53,26 +53,7 @@ public class LeaderboardGUI {
             LeaderboardHolder holder = new LeaderboardHolder(type);
             Inventory inv = Bukkit.createInventory(holder, INVENTORY_SIZE, INVENTORY_TITLE);
 
-            // Fill background
-            ItemStack filler = createItem(Material.BLACK_STAINED_GLASS_PANE, " ", null);
-            for (int i = 0; i < INVENTORY_SIZE; i++) {
-                inv.setItem(i, filler);
-            }
-
-            LeaderboardRedisCache redisCache = plugin.getRedisCache();
-
-            // Add category items
-            for (CategoryDef cat : CATEGORIES) {
-                List<String> lore = buildCategoryLore(cat, type, player, plugin, redisCache);
-                ItemStack item = createItem(cat.icon, cat.displayName, lore);
-                inv.setItem(cat.slot, item);
-            }
-
-            // HOPPER — time type toggle (slot 30)
-            inv.setItem(TIME_TOGGLE_SLOT, buildTimeToggleItem(type));
-
-            // CLOCK — refresh info (slot 32)
-            inv.setItem(REFRESH_INFO_SLOT, buildRefreshInfoItem(redisCache));
+            fillInventory(inv, type, player, plugin);
 
             // Open on correct thread
             if (CompatScheduler.isFolia()) {
@@ -85,6 +66,62 @@ public class LeaderboardGUI {
                 });
             }
         });
+    }
+
+    /**
+     * Update the already-open inventory in-place (async build, sync apply).
+     */
+    static void updateInventory(Player player, Inventory inv, TimedType type, LeaderboardPlugin plugin) {
+        plugin.getScheduler().runTaskAsynchronously(() -> {
+            // Build all items on async thread
+            final ItemStack[] built = new ItemStack[INVENTORY_SIZE];
+            buildItems(built, type, player, plugin);
+
+            // Apply on main thread
+            Runnable applyTask = () -> {
+                if (!player.isOnline()) return;
+                for (int i = 0; i < INVENTORY_SIZE; i++) {
+                    inv.setItem(i, built[i]);
+                }
+                player.updateInventory();
+            };
+
+            if (CompatScheduler.isFolia()) {
+                plugin.getScheduler().runSync(player.getLocation(), applyTask);
+            } else {
+                Bukkit.getScheduler().runTask(plugin, applyTask);
+            }
+        });
+    }
+
+    private static void fillInventory(Inventory inv, TimedType type, Player player, LeaderboardPlugin plugin) {
+        ItemStack[] built = new ItemStack[INVENTORY_SIZE];
+        buildItems(built, type, player, plugin);
+        for (int i = 0; i < INVENTORY_SIZE; i++) {
+            inv.setItem(i, built[i]);
+        }
+    }
+
+    private static void buildItems(ItemStack[] slots, TimedType type, Player player, LeaderboardPlugin plugin) {
+        // Fill background
+        ItemStack filler = createItem(Material.BLACK_STAINED_GLASS_PANE, " ", null);
+        for (int i = 0; i < slots.length; i++) {
+            slots[i] = filler;
+        }
+
+        LeaderboardRedisCache redisCache = plugin.getRedisCache();
+
+        // Category items
+        for (CategoryDef cat : CATEGORIES) {
+            List<String> lore = buildCategoryLore(cat, type, player, plugin, redisCache);
+            slots[cat.slot] = createItem(cat.icon, cat.displayName, lore);
+        }
+
+        // HOPPER — time type toggle
+        slots[TIME_TOGGLE_SLOT] = buildTimeToggleItem(type);
+
+        // CLOCK — refresh info
+        slots[REFRESH_INFO_SLOT] = buildRefreshInfoItem(redisCache);
     }
 
     // ==================== TIME TOGGLE (HOPPER) ====================
@@ -133,38 +170,37 @@ public class LeaderboardGUI {
     // ==================== REFRESH INFO (CLOCK) ====================
 
     private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache) {
-        // Title: §3รีเฟรชข้อมูล (no bold for TH, modern aqua color)
-        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25";
+        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"; // §3รีเฟรชข้อมูล
 
         List<String> lore = new ArrayList<>();
         lore.add("");
 
         if (redisCache != null && redisCache.isEnabled()) {
+            // Redis cache mode
             long lastRefresh = redisCache.getLastRefreshTime();
             int intervalMin = redisCache.getRefreshIntervalMinutes();
 
+            lore.add("\u00A77\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25: \u00A7aRedis Cache"); // §7แหล่งข้อมูล: §aRedis Cache
+
             if (lastRefresh == 0) {
-                // Never refreshed yet
                 lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01..."); // §7รอการรีเฟรชครั้งแรก...
             } else {
-                // Calculate countdown
                 long nextRefresh = lastRefresh + (intervalMin * 60L * 1000L);
                 long remaining = nextRefresh - System.currentTimeMillis();
 
                 if (remaining <= 0) {
                     lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A..."); // §aกำลังรีเฟรช...
                 } else {
-                    String countdown = formatCountdown(remaining);
-                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + countdown); // §7รีเฟรชถัดไปใน: §f...
+                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining)); // §7รีเฟรชถัดไปใน: §f...
                 }
-
                 lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh)); // §7อัพเดทล่าสุด: §f...
             }
-
             lore.add("");
             lore.add("\u00A78\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01 " + intervalMin + " \u0E19\u0E32\u0E17\u0E35"); // §8รีเฟรชทุก X นาที
         } else {
-            lore.add("\u00A77\u0E42\u0E2B\u0E25\u0E14\u0E08\u0E32\u0E01\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E14\u0E22\u0E15\u0E23\u0E07"); // §7โหลดจากฐานข้อมูลโดยตรง
+            // Direct DB mode — show stat-refresh info
+            lore.add("\u00A77\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25: \u00A7e\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"); // §7แหล่งข้อมูล: §eฐานข้อมูล
+            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E08\u0E30\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E15\u0E32\u0E21\u0E40\u0E27\u0E25\u0E32\u0E08\u0E23\u0E34\u0E07"); // §7ข้อมูลจะอัพเดทตามเวลาจริง
         }
 
         return createItem(Material.CLOCK, title, lore);

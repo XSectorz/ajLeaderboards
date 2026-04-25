@@ -27,12 +27,12 @@ public class LeaderboardGUIListener implements Listener {
             int slot = event.getRawSlot();
             if (slot < 0 || slot >= event.getInventory().getSize()) return;
 
-            // Time toggle button clicked
+            // Time toggle button clicked — update in-place
             if (slot == LeaderboardGUI.TIME_TOGGLE_SLOT) {
                 LeaderboardHolder holder = (LeaderboardHolder) event.getInventory().getHolder();
                 TimedType next = LeaderboardGUI.getNextTimeType(holder.getCurrentType());
-                player.closeInventory();
-                LeaderboardGUI.open(player, next, plugin);
+                holder.setCurrentType(next);
+                LeaderboardGUI.updateInventory(player, event.getInventory(), next, plugin);
             }
         }
 
