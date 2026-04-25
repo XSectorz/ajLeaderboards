@@ -19,7 +19,7 @@ import java.util.*;
 public class LeaderboardGUI {
 
     // ==================== CATEGORY DEFINITIONS ====================
-    static final CategoryDef[] CATEGORIES = {
+    public static final CategoryDef[] CATEGORIES = {
         new CategoryDef("money",        "\u00A76\u00A7lMONEY",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
         new CategoryDef("kills",        "\u00A7c\u00A7lKILLS",         "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
         new CategoryDef("deaths",       "\u00A74\u00A7lDEATHS",        "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
@@ -350,13 +350,13 @@ public class LeaderboardGUI {
         return item;
     }
 
-    static class CategoryDef {
-        final String id;
-        final String displayName;
-        final String description;
-        final String boardName;
-        final Material icon;
-        final int slot;
+    public static class CategoryDef {
+        public final String id;
+        public final String displayName;
+        public final String description;
+        public final String boardName;
+        public final Material icon;
+        public final int slot;
 
         CategoryDef(String id, String displayName, String description, String boardName, Material icon, int slot) {
             this.id = id;
