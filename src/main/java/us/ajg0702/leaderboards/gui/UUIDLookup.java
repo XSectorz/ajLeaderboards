@@ -32,9 +32,9 @@ public class UUIDLookup {
     }
 
     public void init() {
-        String host = plugin.getAConfig().getString("redis.host");
-        int port = plugin.getAConfig().getInt("redis.port");
-        String password = plugin.getAConfig().getString("redis.password");
+        String host = plugin.getAConfig().getString("redis-uuid-host");
+        int port = plugin.getAConfig().getInt("redis-uuid-port");
+        String password = plugin.getAConfig().getString("redis-uuid-password");
 
         if (host == null || host.isEmpty()) {
             plugin.getLogger().info("Redis not configured for UUID lookup. Skipping.");
@@ -56,7 +56,7 @@ public class UUIDLookup {
                 jedis.ping();
             }
 
-            responseChannel = RESPONSE_PREFIX + plugin.getAConfig().getString("redis.server-name");
+            responseChannel = RESPONSE_PREFIX + plugin.getAConfig().getString("redis-uuid-server-name");
             enabled = true;
             running = true;
             startSubscriber();

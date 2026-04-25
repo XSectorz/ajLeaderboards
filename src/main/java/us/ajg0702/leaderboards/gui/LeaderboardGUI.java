@@ -121,7 +121,7 @@ public class LeaderboardGUI {
         slots[TIME_TOGGLE_SLOT] = buildTimeToggleItem(type);
 
         // CLOCK — refresh info
-        slots[REFRESH_INFO_SLOT] = buildRefreshInfoItem(redisCache);
+        slots[REFRESH_INFO_SLOT] = buildRefreshInfoItem(redisCache, plugin);
     }
 
     // ==================== TIME TOGGLE (HOPPER) ====================
@@ -169,18 +169,15 @@ public class LeaderboardGUI {
 
     // ==================== REFRESH INFO (CLOCK) ====================
 
-    private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache) {
+    private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache, LeaderboardPlugin plugin) {
         String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"; // §3รีเฟรชข้อมูล
 
         List<String> lore = new ArrayList<>();
         lore.add("");
 
         if (redisCache != null && redisCache.isEnabled()) {
-            // Redis cache mode
             long lastRefresh = redisCache.getLastRefreshTime();
             int intervalMin = redisCache.getRefreshIntervalMinutes();
-
-            lore.add("\u00A77\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25: \u00A7aRedis Cache"); // §7แหล่งข้อมูล: §aRedis Cache
 
             if (lastRefresh == 0) {
                 lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01..."); // §7รอการรีเฟรชครั้งแรก...
@@ -191,16 +188,16 @@ public class LeaderboardGUI {
                 if (remaining <= 0) {
                     lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A..."); // §aกำลังรีเฟรช...
                 } else {
-                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining)); // §7รีเฟรชถัดไปใน: §f...
+                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining)); // §7รีเฟรชถัดไปใน:
                 }
-                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh)); // §7อัพเดทล่าสุด: §f...
+                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh)); // §7อัพเดทล่าสุด:
             }
-            lore.add("");
-            lore.add("\u00A78\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01 " + intervalMin + " \u0E19\u0E32\u0E17\u0E35"); // §8รีเฟรชทุก X นาที
         } else {
-            // Direct DB mode — show stat-refresh info
-            lore.add("\u00A77\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25: \u00A7e\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"); // §7แหล่งข้อมูล: §eฐานข้อมูล
-            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E08\u0E30\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E15\u0E32\u0E21\u0E40\u0E27\u0E25\u0E32\u0E08\u0E23\u0E34\u0E07"); // §7ข้อมูลจะอัพเดทตามเวลาจริง
+            // No Redis — use stat-refresh interval as countdown reference
+            int statRefreshTicks = plugin.getAConfig().getInt("stat-refresh");
+            int statRefreshSec = statRefreshTicks / 20;
+            lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: \u00A7f" + statRefreshSec + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35"); // §7รีเฟรชทุก: §fX วินาที
+            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34"); // §7ข้อมูลอัพเดทอัตโนมัติ
         }
 
         return createItem(Material.CLOCK, title, lore);

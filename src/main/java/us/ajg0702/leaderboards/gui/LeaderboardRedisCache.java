@@ -30,17 +30,17 @@ public class LeaderboardRedisCache {
     }
 
     public void init() {
-        boolean configEnabled = plugin.getAConfig().getBoolean("redis-cache.enabled");
+        boolean configEnabled = plugin.getAConfig().getBoolean("redis-cache-enabled");
         if (!configEnabled) {
             plugin.getLogger().info("Redis leaderboard cache is disabled.");
             return;
         }
 
-        String host = plugin.getAConfig().getString("redis-cache.host");
-        int port = plugin.getAConfig().getInt("redis-cache.port");
-        String password = plugin.getAConfig().getString("redis-cache.password");
-        writer = plugin.getAConfig().getBoolean("redis-cache.writer");
-        refreshIntervalMinutes = plugin.getAConfig().getInt("redis-cache.refresh-interval");
+        String host = plugin.getAConfig().getString("redis-cache-host");
+        int port = plugin.getAConfig().getInt("redis-cache-port");
+        String password = plugin.getAConfig().getString("redis-cache-password");
+        writer = plugin.getAConfig().getBoolean("redis-cache-writer");
+        refreshIntervalMinutes = plugin.getAConfig().getInt("redis-cache-refresh-interval");
 
         if (host == null || host.isEmpty()) {
             plugin.getLogger().warning("Redis cache enabled but host is empty. Disabling.");

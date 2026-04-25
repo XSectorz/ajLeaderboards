@@ -233,20 +233,20 @@ fetching-thread-pool-keep-alive: 500
 
 # Redis server host
 #  Default: "" (disabled)
-redis.host: ""
+redis-uuid-host: ""
 
 # Redis server port
 #  Default: 6379
-redis.port: 6379
+redis-uuid-port: 6379
 
 # Redis server password (leave empty if no password)
 #  Default: ""
-redis.password: ""
+redis-uuid-password: ""
 
 # This server's name (used for Redis response channel)
 # Should match your BungeeCord server name
 #  Default: "server"
-redis.server-name: "server"
+redis-uuid-server-name: "server"
 
 
 # ===== Redis Leaderboard Cache =====
@@ -256,30 +256,30 @@ redis.server-name: "server"
 
 # Enable Redis leaderboard cache
 #  Default: false
-redis-cache.enabled: false
+redis-cache-enabled: false
 
 # Redis cache server host
 #  Default: ""
-redis-cache.host: ""
+redis-cache-host: ""
 
 # Redis cache server port
 #  Default: 6379
-redis-cache.port: 6379
+redis-cache-port: 6379
 
 # Redis cache server password (leave empty if no password)
 #  Default: ""
-redis-cache.password: ""
+redis-cache-password: ""
 
 # Should this server be the WRITER (refresh data from DB to Redis)?
 # Only ONE server in your network should have this set to true.
 # Other servers should set this to false (reader mode — only reads from Redis).
 #  Default: false
-redis-cache.writer: false
+redis-cache-writer: false
 
 # How often (in minutes) should the writer server refresh data from DB to Redis?
 # Only applies when redis-cache.writer is true.
 #  Default: 60
-redis-cache.refresh-interval: 60
+redis-cache-refresh-interval: 60
 
 
 # # # # # # # # # # # # # # # # # # # # # # #
