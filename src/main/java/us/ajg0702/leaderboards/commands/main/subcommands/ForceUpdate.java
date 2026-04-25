@@ -87,12 +87,23 @@ public class ForceUpdate extends SubCommand {
 
             // === STEP 2: Update all players ===
             sender.sendMessage(message(""));
-            sender.sendMessage(message("<yellow>Updating all players..."));
+            sender.sendMessage(message("<yellow>Updating all players (debug=true)..."));
+
+            // Temporarily enable update-de-bug for detailed logging
             for (Player p : players) {
                 if (plugin.isShuttingDown()) return;
                 if (!p.isOnline()) continue;
-                plugin.getCache().updatePlayerStats(p);
+                for (String board : boards) {
+                    try {
+                        // Direct test: manually insert via updateStat
+                        plugin.getCache().updateStat(board, p);
+                        sender.sendMessage(message("<gray>  updateStat(" + board + ", " + p.getName() + ") completed"));
+                    } catch (Exception e) {
+                        sender.sendMessage(message("<red>  updateStat(" + board + ", " + p.getName() + ") ERROR: " + e.getMessage()));
+                    }
+                }
             }
+
             // 2nd pass for zero-validation
             if (plugin.getAConfig().getBoolean("require-zero-validation")) {
                 sender.sendMessage(message("<yellow>Running 2nd pass (zero-validation)..."));
@@ -103,6 +114,10 @@ public class ForceUpdate extends SubCommand {
                 }
             }
             sender.sendMessage(message("<green>Players updated."));
+
+            // Show DB method info
+            sender.sendMessage(message("<gray>DB method: " + plugin.getCache().getMethod().getName() +
+                    ", table prefix: '" + plugin.getCache().getTablePrefix() + "'"));
 
             // === STEP 3: Verify DB read ===
             sender.sendMessage(message(""));
