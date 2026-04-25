@@ -37,6 +37,10 @@ import us.ajg0702.leaderboards.formatting.PlaceholderFormatter;
 import us.ajg0702.leaderboards.loaders.MessageLoader;
 import us.ajg0702.leaderboards.nms.legacy.HeadUtils;
 import us.ajg0702.leaderboards.placeholders.PlaceholderExpansion;
+import us.ajg0702.leaderboards.gui.LeaderboardGUI;
+import us.ajg0702.leaderboards.gui.LeaderboardGUIListener;
+import us.ajg0702.leaderboards.gui.ProfileGUI;
+import us.ajg0702.leaderboards.gui.UUIDLookup;
 import us.ajg0702.leaderboards.utils.*;
 import us.ajg0702.utils.common.Config;
 import us.ajg0702.utils.common.Messages;
@@ -74,6 +78,7 @@ public class LeaderboardPlugin extends JavaPlugin {
     private ArmorStandManager armorStandManager;
     private LuckpermsContextLoader contextLoader;
     private ResetSaver resetSaver;
+    private UUIDLookup uuidLookup;
     private final Exporter exporter = new Exporter(this);
     private final PlaceholderFormatter placeholderFormatter = new PlaceholderFormatter(this);
 
@@ -210,6 +215,87 @@ public class LeaderboardPlugin extends JavaPlugin {
         contextLoader.checkReload();
 
         Bukkit.getPluginManager().registerEvents(new Listeners(this), this);
+        Bukkit.getPluginManager().registerEvents(new LeaderboardGUIListener(this), this);
+
+        // Initialize Redis UUID lookup
+        uuidLookup = new UUIDLookup(this);
+        uuidLookup.init();
+
+        // Register /leaderboard command
+        if (getCommand("leaderboard") != null) {
+            getCommand("leaderboard").setExecutor((sender, command, label, args) -> {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("\u00A7c\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E19\u0E35\u0E49\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19"); // คำสั่งนี้ใช้ได้เฉพาะผู้เล่นเท่านั้น
+                    return true;
+                }
+                LeaderboardGUI.open((Player) sender, TimedType.ALLTIME, this);
+                return true;
+            });
+        }
+
+        // Register /profile command
+        if (getCommand("profile") != null) {
+            getCommand("profile").setExecutor((sender, command, label, args) -> {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("\u00A7c\u0E04\u0E33\u0E2A\u0E31\u0E48\u0E07\u0E19\u0E35\u0E49\u0E43\u0E0A\u0E49\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19"); // คำสั่งนี้ใช้ได้เฉพาะผู้เล่นเท่านั้น
+                    return true;
+                }
+                Player player = (Player) sender;
+                if (args.length == 0) {
+                    // Show own profile
+                    ProfileGUI.open(player, player, this);
+                } else {
+                    // Show target player's profile (supports offline players via Redis)
+                    String targetName = args[0];
+                    final LeaderboardPlugin pl = this;
+                    // Run async since Redis lookup blocks
+                    getScheduler().runTaskAsynchronously(() -> {
+                        // Try online player first
+                        Player onlineTarget = Bukkit.getPlayerExact(targetName);
+                        if (onlineTarget != null) {
+                            ProfileGUI.open(player, onlineTarget, pl);
+                            return;
+                        }
+                        // Try Redis UUID lookup via xsserverutils
+                        if (uuidLookup != null && uuidLookup.isEnabled()) {
+                            java.util.UUID uuid = uuidLookup.lookupUUID(targetName);
+                            if (uuid != null) {
+                                org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(uuid);
+                                ProfileGUI.open(player, target, pl);
+                                return;
+                            }
+                        }
+                        // Fallback: search local offline players
+                        org.bukkit.OfflinePlayer target = null;
+                        for (org.bukkit.OfflinePlayer op : Bukkit.getOfflinePlayers()) {
+                            if (targetName.equalsIgnoreCase(op.getName())) {
+                                target = op;
+                                break;
+                            }
+                        }
+                        if (target == null) {
+                            player.sendMessage("\u00A7c\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E0A\u0E37\u0E48\u0E2D: \u00A7f" + targetName); // ไม่พบผู้เล่นชื่อ:
+                            return;
+                        }
+                        ProfileGUI.open(player, target, pl);
+                    });
+                }
+                return true;
+            });
+            getCommand("profile").setTabCompleter((sender, command, alias, args) -> {
+                if (args.length == 1) {
+                    List<String> completions = new ArrayList<>();
+                    String input = args[0].toLowerCase(Locale.ROOT);
+                    for (Player online : Bukkit.getOnlinePlayers()) {
+                        if (online.getName().toLowerCase(Locale.ROOT).startsWith(input)) {
+                            completions.add(online.getName());
+                        }
+                    }
+                    return completions;
+                }
+                return Collections.emptyList();
+            });
+        }
 
         if(config.getBoolean("enable-updater")) {
             updateManager = new UpdateManager(utilsLogger, getDescription().getVersion(), "ajLeaderboards", "ajLeaderboards", null, getDataFolder().getParentFile(), "ajLeaderboards update");
@@ -232,6 +318,7 @@ public class LeaderboardPlugin extends JavaPlugin {
         if(getContextLoader() != null) getContextLoader().checkReload(false);
         getScheduler().cancelTasks();
         if(getTopManager() != null) getTopManager().shutdown();
+        if(uuidLookup != null) uuidLookup.shutdown();
 
         if(getCache() != null) {
             ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -354,6 +441,10 @@ public class LeaderboardPlugin extends JavaPlugin {
 
     public ResetSaver getResetSaver() {
         return resetSaver;
+    }
+
+    public UUIDLookup getUuidLookup() {
+        return uuidLookup;
     }
 
     public CompatScheduler getCompatScheduler() {

@@ -226,6 +226,29 @@ max-fetching-threads: 70
 fetching-thread-pool-keep-alive: 500
 
 
+# ===== Redis UUID Lookup (for /profile command) =====
+# This connects to the same Redis that xsserverutils uses
+# to look up player UUIDs by name across the BungeeCord network.
+# Leave host empty to disable this feature.
+
+# Redis server host
+#  Default: "" (disabled)
+redis.host: ""
+
+# Redis server port
+#  Default: 6379
+redis.port: 6379
+
+# Redis server password (leave empty if no password)
+#  Default: ""
+redis.password: ""
+
+# This server's name (used for Redis response channel)
+# Should match your BungeeCord server name
+#  Default: "server"
+redis.server-name: "server"
+
+
 # # # # # # # # # # # # # # # # # # # # # # #
 #                                           #
 #  End of config. Happy leaderboard-ing :)  #

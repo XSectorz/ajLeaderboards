@@ -54,6 +54,7 @@ dependencies {
     slim("com.zaxxer:HikariCP:3.4.5")
     slim("com.h2database:h2:2.1.214")
     slim("com.squareup.okhttp3:okhttp:4.11.0")
+    slim("redis.clients:jedis:3.6.0")
     //implementation("io.prometheus", "simpleclient", "0.9.0")
 }
 
@@ -79,6 +80,8 @@ tasks.slimJar {
     relocate("com.squareup", "us.ajg0702.leaderboards.libs")
     relocate("okhttp3", "us.ajg0702.leaderboards.libs.okhttp3")
     relocate("okio", "us.ajg0702.leaderboards.libs.okio")
+    relocate("redis.clients", "us.ajg0702.leaderboards.libs.redis")
+    relocate("org.apache.commons.pool2", "us.ajg0702.leaderboards.libs.pool2")
 }
 
 tasks.shadowJar {

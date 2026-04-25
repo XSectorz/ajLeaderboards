@@ -12,7 +12,18 @@ commands:
       aliases: [ajlb, ajl, alb]
       description: Commands for ajLeaderboards
       permission: ajleaderboards.use
+   leaderboard:
+      aliases: [lb]
+      description: Open leaderboard GUI
+   profile:
+      description: View player stats profile
 permissions:
    ajleaderboards.use:
       description: Allows you to set up the plugin
       default: op
+   ajleaderboards.leaderboard:
+      description: Open leaderboard GUI
+      default: true
+   ajleaderboards.profile:
+      description: View player stats profile
+      default: true
