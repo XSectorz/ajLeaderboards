@@ -279,18 +279,9 @@ public class LeaderboardPlugin extends JavaPlugin {
                                 return;
                             }
                         }
-                        // Fallback: search local offline players
-                        org.bukkit.OfflinePlayer target = null;
-                        for (org.bukkit.OfflinePlayer op : Bukkit.getOfflinePlayers()) {
-                            if (targetName.equalsIgnoreCase(op.getName())) {
-                                target = op;
-                                break;
-                            }
-                        }
-                        if (target == null) {
-                            player.sendMessage("\u00A7c\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E0A\u0E37\u0E48\u0E2D: \u00A7f" + targetName); // ไม่พบผู้เล่นชื่อ:
-                            return;
-                        }
+                        // Fallback: use Bukkit offline player lookup (by name → Mojang API)
+                        @SuppressWarnings("deprecation")
+                        org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
                         ProfileGUI.open(player, target, pl);
                     });
                 }

@@ -23,17 +23,39 @@ public class LeaderboardGUI {
     // Boards that store time in ticks (statistic_play_one_minute)
     private static final Set<String> TIME_BOARDS = new HashSet<>(Collections.singletonList("statistic_play_one_minute"));
 
+    // Hex color helper: "4ADE80" → "§x§4§A§D§E§8§0"
+    private static String hex(String h) {
+        StringBuilder sb = new StringBuilder("\u00A7x");
+        for (char c : h.toCharArray()) sb.append("\u00A7").append(c);
+        return sb.toString();
+    }
+
+    // Category colors (hex)
+    private static final String C_MONEY  = hex("4ADE80"); // green
+    private static final String C_KILLS  = hex("F87171"); // red
+    private static final String C_DEATHS = hex("A1A1AA"); // zinc
+    private static final String C_PLAY   = hex("38BDF8"); // sky blue
+    private static final String C_FISH   = hex("818CF8"); // indigo
+    private static final String C_BREAK  = hex("FBBF24"); // amber
+    private static final String C_PLACE  = hex("34D399"); // emerald
+    private static final String C_MOBS   = hex("F472B6"); // pink
+    private static final String C_SELL   = hex("FB923C"); // orange
+    private static final String C_BUY    = hex("22D3EE"); // cyan
+
+    // Description color
+    private static final String C_DESC = hex("94A3B8"); // slate gray
+
     public static final CategoryDef[] CATEGORIES = {
-        new CategoryDef("money",        "\u00A76\u1D0D\u1D0F\u0274\u1D07\u028F",                             "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
-        new CategoryDef("kills",        "\u00A7c\u1D0B\u026A\u029F\u029F\ua731",                             "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
-        new CategoryDef("deaths",       "\u00A74\u1D05\u1D07\u1D00\u1D1B\u029C\ua731",                       "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
-        new CategoryDef("playtime",     "\u00A7b\u1D18\u029F\u1D00\u028F\u1D1B\u026A\u1D0D\u1D07",           "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E48\u0E19\u0E19\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_play_one_minute", Material.COMPASS,         14),
-        new CategoryDef("fishing",      "\u00A79\ua730\u026A\ua731\u029C\u026A\u0274\u0262",                  "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_fish_caught",    Material.FISHING_ROD,      15),
-        new CategoryDef("blocks_break", "\u00A7e\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u0299\u0280\u1D07\u1D00\u1D0B", "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_mine_block",     Material.DIAMOND_PICKAXE,  20),
-        new CategoryDef("blocks_place", "\u00A7a\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u1D18\u029F\u1D00\u1D04\u1D07", "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E27\u0E32\u0E07\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_use_item",       Material.BRICKS,           21),
-        new CategoryDef("mobs_kill",    "\u00A7d\u1D0D\u1D0F\u0299\ua731 \u1D0B\u026A\u029F\u029F",          "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E21\u0E2D\u0E1A\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_mob_kills",      Material.ZOMBIE_HEAD,      22),
-        new CategoryDef("sell",         "\u00A76\ua731\u1D07\u029F\u029F",                                    "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.GOLD_INGOT,       23),
-        new CategoryDef("buy",          "\u00A73\u0299\u1D1C\u028F",                                          "\u00A77\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E0B\u0E37\u0E49\u0E2D\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.DIAMOND,          24)
+        new CategoryDef("money",        C_MONEY + "\u1D0D\u1D0F\u0274\u1D07\u028F",                                       C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E23\u0E27\u0E22\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "vault_eco_balance",        Material.EMERALD,          11),
+        new CategoryDef("kills",        C_KILLS + "\u1D0B\u026A\u029F\u029F\ua731",                                        C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",         "statistic_player_kills",   Material.IRON_SWORD,       12),
+        new CategoryDef("deaths",       C_DEATHS + "\u1D05\u1D07\u1D00\u1D1B\u029C\ua731",                                 C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E32\u0E22\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_deaths",         Material.SKELETON_SKULL,   13),
+        new CategoryDef("playtime",     C_PLAY + "\u1D18\u029F\u1D00\u028F\u1D1B\u026A\u1D0D\u1D07",                       C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E40\u0E25\u0E48\u0E19\u0E19\u0E32\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                     "statistic_play_one_minute", Material.COMPASS,         14),
+        new CategoryDef("fishing",      C_FISH + "\ua730\u026A\ua731\u029C\u026A\u0274\u0262",                              C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_fish_caught",    Material.FISHING_ROD,      15),
+        new CategoryDef("blocks_break", C_BREAK + "\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u0299\u0280\u1D07\u1D00\u1D0B",   C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_mine_block",     Material.DIAMOND_PICKAXE,  20),
+        new CategoryDef("blocks_place", C_PLACE + "\u0299\u029F\u1D0F\u1D04\u1D0B\ua731 \u1D18\u029F\u1D00\u1D04\u1D07",   C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E27\u0E32\u0E07\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",             "statistic_use_item",       Material.BRICKS,           21),
+        new CategoryDef("mobs_kill",    C_MOBS + "\u1D0D\u1D0F\u0299\ua731 \u1D0B\u026A\u029F\u029F",                      C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E06\u0E48\u0E32\u0E21\u0E2D\u0E1A\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 "statistic_mob_kills",      Material.ZOMBIE_HEAD,      22),
+        new CategoryDef("sell",         C_SELL + "\ua731\u1D07\u029F\u029F",                                                C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.GOLD_INGOT,       23),
+        new CategoryDef("buy",          C_BUY + "\u0299\u1D1C\u028F",                                                      C_DESC + "\u0E08\u0E31\u0E14\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E35\u0E48\u0E0B\u0E37\u0E49\u0E2D\u0E02\u0E2D\u0E07\u0E21\u0E32\u0E01\u0E17\u0E35\u0E48\u0E2A\u0E38\u0E14",                 null,                       Material.DIAMOND,          24)
     };
 
     // Bottom row items
@@ -47,7 +69,13 @@ public class LeaderboardGUI {
         "\u0E23\u0E32\u0E22\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C",
         "\u0E23\u0E32\u0E22\u0E40\u0E14\u0E37\u0E2D\u0E19"
     };
-    private static final String[] TIME_COLORS = {"\u00A76", "\u00A7e", "\u00A7b", "\u00A7d"};
+    // Time type hex colors
+    private static final String[] TIME_COLORS = {
+        hex("4ADE80"),  // ทั้งหมด — green
+        hex("FACC15"),  // รายวัน — yellow
+        hex("38BDF8"),  // รายสัปดาห์ — sky blue
+        hex("FB7185")   // รายเดือน — rose
+    };
 
     private static final int INVENTORY_SIZE = 36;
     private static final String INVENTORY_TITLE = "\u00A78\u029F\u1D07\u1D00\u1D05\u1D07\u0280\u0299\u1D0F\u1D00\u0280\u1D05";
@@ -192,19 +220,22 @@ public class LeaderboardGUI {
     @SuppressWarnings("deprecation")
     private static ItemStack buildTimeToggleItem(TimedType current) {
         int idx = getTimeIndex(current);
-        String title = "\u00A7e\u0E01\u0E32\u0E23\u0E08\u0E31\u0E14\u0E40\u0E23\u0E35\u0E22\u0E07"; // §eการจัดเรียง
+        // Small caps title: §fꜱᴏʀᴛ
+        String title = "\u00A7f\ua731\u1D0F\u0280\u1D1B";
 
         List<String> lore = new ArrayList<>();
         lore.add("");
         for (int i = 0; i < TIME_CYCLE.length; i++) {
             if (i == idx) {
-                lore.add(" \u00A7a\u25B6 " + TIME_COLORS[i] + TIME_LABELS[i]);
+                // Selected: colored bullet ● with label
+                lore.add(" " + TIME_COLORS[i] + "\u25CF " + TIME_LABELS[i]);
             } else {
-                lore.add(" \u00A78  \u00A77" + TIME_LABELS[i]);
+                // Unselected: dark gray bullet ○ with gray label
+                lore.add(" \u00A78\u25CB \u00A77" + TIME_LABELS[i]);
             }
         }
         lore.add("");
-        lore.add("\u00A77\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19");
+        lore.add("\u00A78\u0E04\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19"); // §8คลิกเพื่อเปลี่ยน
 
         ItemStack item = createItem(Material.HOPPER, title, lore);
         ItemMeta meta = item.getItemMeta();
@@ -230,8 +261,14 @@ public class LeaderboardGUI {
 
     // ==================== REFRESH INFO (CLOCK) ====================
 
+    private static final String C_CLOCK_TITLE = hex("67E8F9"); // cyan-300
+    private static final String C_LABEL = hex("94A3B8");      // slate-400
+    private static final String C_VALUE = hex("E2E8F0");      // slate-200
+    private static final String C_ACCENT = hex("4ADE80");     // green-400
+    private static final String C_MUTED = hex("64748B");      // slate-500
+
     private static ItemStack buildRefreshInfoItem(LeaderboardRedisCache redisCache, LeaderboardPlugin plugin) {
-        String title = "\u00A73\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25";
+        String title = C_CLOCK_TITLE + "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25"; // รีเฟรชข้อมูล
 
         List<String> lore = new ArrayList<>();
         lore.add("");
@@ -241,23 +278,23 @@ public class LeaderboardGUI {
             int intervalMin = redisCache.getRefreshIntervalMinutes();
 
             if (lastRefresh == 0) {
-                lore.add("\u00A77\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01...");
+                lore.add(C_LABEL + "\u0E23\u0E2D\u0E01\u0E32\u0E23\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01...");
             } else {
                 long nextRefresh = lastRefresh + (intervalMin * 60L * 1000L);
                 long remaining = nextRefresh - System.currentTimeMillis();
 
                 if (remaining <= 0) {
-                    lore.add("\u00A7a\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A...");
+                    lore.add(C_ACCENT + "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A...");
                 } else {
-                    lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: \u00A7f" + formatCountdown(remaining));
+                    lore.add(C_LABEL + "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E43\u0E19: " + C_VALUE + formatCountdown(remaining));
                 }
-                lore.add("\u00A77\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: \u00A7f" + formatRelativeTime(lastRefresh));
+                lore.add(C_LABEL + "\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14: " + C_VALUE + formatRelativeTime(lastRefresh));
             }
         } else {
             int statRefreshTicks = plugin.getAConfig().getInt("stat-refresh");
             int statRefreshSec = statRefreshTicks / 20;
-            lore.add("\u00A77\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: \u00A7f" + statRefreshSec + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35");
-            lore.add("\u00A77\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34");
+            lore.add(C_LABEL + "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E17\u0E38\u0E01: " + C_VALUE + statRefreshSec + " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35");
+            lore.add(C_MUTED + "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2D\u0E31\u0E1E\u0E40\u0E14\u0E17\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34");
         }
 
         return createItem(Material.CLOCK, title, lore);
@@ -287,6 +324,15 @@ public class LeaderboardGUI {
         return hours + " \u0E0A\u0E31\u0E48\u0E27\u0E42\u0E21\u0E07\u0E17\u0E35\u0E48\u0E41\u0E25\u0E49\u0E27";
     }
 
+    // ==================== LORE COLORS (hex) ====================
+    private static final String L_RANK  = hex("FBBF24"); // amber — #1, #2
+    private static final String L_NAME  = hex("F1F5F9"); // slate-100 — player name
+    private static final String L_SEP   = hex("64748B"); // slate-500 — dash
+    private static final String L_SCORE = hex("4ADE80"); // green-400 — score value
+    private static final String L_EMPTY = hex("475569"); // slate-600 — no data
+    private static final String L_POS   = hex("38BDF8"); // sky-400 — your position arrow
+    private static final String L_MOCK  = hex("475569"); // slate-600 — mock label
+
     // ==================== CATEGORY LORE ====================
 
     private static List<String> buildCategoryLore(CategoryDef cat, TimedType type, Player player,
@@ -298,8 +344,8 @@ public class LeaderboardGUI {
         if (cat.boardName == null) {
             lore.addAll(getMockData(cat.id));
             lore.add("");
-            lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7fN/A");
-            lore.add("\u00A78(\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E31\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07)");
+            lore.add(L_POS + "\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: " + L_NAME + "N/A");
+            lore.add(L_MOCK + "(\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E31\u0E27\u0E2D\u0E22\u0E48\u0E32\u0E07)");
             return lore;
         }
 
@@ -311,10 +357,10 @@ public class LeaderboardGUI {
                 usedRedis = true;
                 for (LeaderboardRedisCache.CachedEntry e : top10) {
                     String score = formatScore(e.score, cat.boardName);
-                    lore.add("\u00A7e#" + e.position + " \u00A7f" + e.name + " \u00A77- \u00A7a" + score);
+                    lore.add(L_RANK + "#" + e.position + " " + L_NAME + e.name + " " + L_SEP + "- " + L_SCORE + score);
                 }
                 for (int pos = top10.size() + 1; pos <= 10; pos++) {
-                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
+                    lore.add(L_RANK + "#" + pos + " " + L_SEP + "- " + L_EMPTY + "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
                 }
             }
         }
@@ -323,7 +369,7 @@ public class LeaderboardGUI {
             boolean boardExists = plugin.getTopManager().boardExists(cat.boardName);
             for (int pos = 1; pos <= 10; pos++) {
                 if (!boardExists) {
-                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
+                    lore.add(L_RANK + "#" + pos + " " + L_SEP + "- " + L_EMPTY + "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
                     continue;
                 }
                 StatEntry entry = plugin.getTopManager().getCachedStat(pos, cat.boardName, type);
@@ -332,9 +378,9 @@ public class LeaderboardGUI {
                 }
                 if (entry != null && entry.hasPlayer()) {
                     String score = formatScore(entry.getScore(), cat.boardName);
-                    lore.add("\u00A7e#" + pos + " \u00A7f" + entry.getPlayerName() + " \u00A77- \u00A7a" + score);
+                    lore.add(L_RANK + "#" + pos + " " + L_NAME + entry.getPlayerName() + " " + L_SEP + "- " + L_SCORE + score);
                 } else {
-                    lore.add("\u00A7e#" + pos + " \u00A77- \u00A78\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
+                    lore.add(L_RANK + "#" + pos + " " + L_SEP + "- " + L_EMPTY + "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
                 }
             }
         }
@@ -361,9 +407,9 @@ public class LeaderboardGUI {
         }
 
         if (posText != null) {
-            lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7f#" + posText);
+            lore.add(L_POS + "\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: " + L_NAME + "#" + posText);
         } else {
-            lore.add("\u00A7a\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: \u00A7fN/A");
+            lore.add(L_POS + "\u2192 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2D\u0E22\u0E39\u0E48\u0E17\u0E35\u0E48: " + L_NAME + "N/A");
         }
 
         return lore;
@@ -388,7 +434,7 @@ public class LeaderboardGUI {
             };
         }
         for (int i = 0; i < mockEntries.length; i++) {
-            lines.add("\u00A7e#" + (i + 1) + " \u00A7f" + mockEntries[i][0] + " \u00A77- \u00A7a" + mockEntries[i][1]);
+            lines.add(L_RANK + "#" + (i + 1) + " " + L_NAME + mockEntries[i][0] + " " + L_SEP + "- " + L_SCORE + mockEntries[i][1]);
         }
         return lines;
     }
