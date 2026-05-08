@@ -1,8 +1,8 @@
-name: ajLeaderboards
+name: XSLeaderboard
 version: "@VERSION@"
 main: us.ajg0702.leaderboards.LeaderboardPlugin
 folia-supported: true
-author: ajgeiss0702
+author: xsectorz
 depend: [PlaceholderAPI]
 softdepend: [Vault, SkinsRestorer]
 description: Leaderboards for your server

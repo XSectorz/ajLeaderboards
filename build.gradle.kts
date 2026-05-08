@@ -101,7 +101,7 @@ tasks.shadowJar {
     relocate("org.jetbrains", "us.ajg0702.leaderboards.libs.jetbrains")
     relocate("kotlin", "us.ajg0702.leaderboards.kotlin")
 
-    archiveBaseName.set("ajLeaderboards")
+    archiveBaseName.set("XSLeaderboard")
     archiveClassifier.set("")
     exclude("junit/**/*")
     exclude("org/junit/**/*")
