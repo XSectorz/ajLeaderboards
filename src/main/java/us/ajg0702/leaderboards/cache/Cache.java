@@ -232,23 +232,16 @@ public class Cache {
 			return -3;
 		}
 
-		Connection connection = null;
-		ResultSet rs = null;
-
 		int size;
 
-		try {
-			connection = method.getConnection();
-
-			PreparedStatement ps = connection.prepareStatement(String.format(
+		try (Connection connection = method.getConnection();
+			 PreparedStatement ps = connection.prepareStatement(String.format(
 					method.formatStatement("select COUNT(1) from '%s'"),
 					tablePrefix+board
-			));
-
-			rs = ps.executeQuery();
+			 ));
+			 ResultSet rs = ps.executeQuery()) {
 
 			rs.next();
-
 			size = rs.getInt(1);
 
 		} catch (SQLException e) {
@@ -262,14 +255,6 @@ public class Cache {
 			} else {
 				return 0;
 			}
-		} finally {
-			try {
-				if(connection != null) method.close(connection);
-				if(rs != null) rs.close();
-			} catch (SQLException e) {
-				plugin.getLogger().log(Level.WARNING, "Error while closing resources from board size fetch:", e);
-			}
-
 		}
 
 		return size;
@@ -283,24 +268,17 @@ public class Cache {
 			return -3;
 		}
 
-		Connection connection = null;
-		ResultSet rs = null;
-
 		double total;
 
-		try {
-			connection = method.getConnection();
-
-			PreparedStatement ps = connection.prepareStatement(String.format(
+		try (Connection connection = method.getConnection();
+			 PreparedStatement ps = connection.prepareStatement(String.format(
 					method.formatStatement("select SUM(%s) as total from '%s'"),
 					type == TimedType.ALLTIME ? "\"value\"" : type.lowerName() + "_delta",
 					tablePrefix+board
-			));
-
-			rs = ps.executeQuery();
+			 ));
+			 ResultSet rs = ps.executeQuery()) {
 
 			rs.next();
-
 			total = rs.getDouble(1);
 
 		} catch (SQLException e) {
@@ -314,14 +292,6 @@ public class Cache {
 			} else {
 				return 0;
 			}
-		} finally {
-			try {
-				if(connection != null) method.close(connection);
-				if(rs != null) rs.close();
-			} catch (SQLException e) {
-				plugin.getLogger().log(Level.WARNING, "Error while closing resources from board size fetch:", e);
-			}
-
 		}
 
 		return total;
@@ -329,34 +299,28 @@ public class Cache {
 
 	public boolean createBoard(String name) {
 		try {
-			Connection conn = method.getConnection();
-			PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
-					CREATE_TABLE.get(method.getName()),
-					tablePrefix+name
-			)));
+			try (Connection conn = method.getConnection()) {
+				try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+						CREATE_TABLE.get(method.getName()),
+						tablePrefix+name
+				)))) {
+					ps.executeUpdate();
+				}
 
-			ps.executeUpdate();
-
-			ps.close();
-
-			for (TimedType type : TimedType.values()) {
-				if(type == TimedType.ALLTIME) continue;
-
-				try {
-					ps = conn.prepareStatement(method.formatStatement(String.format(
+				for (TimedType type : TimedType.values()) {
+					if(type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
 							CREATE_TIMESTAMP_INDEX,
 							type.lowerName(),
 							tablePrefix+name,
 							type.lowerName()
-					)));
-					ps.executeUpdate();
-				} catch(SQLException e) {
-					if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key") ) throw e;
+					)))) {
+						ps.executeUpdate();
+					} catch(SQLException e) {
+						if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key") ) throw e;
+					}
 				}
-				ps.close();
 			}
-
-			method.close(conn);
 			plugin.getTopManager().fetchBoards();
 			plugin.getContextLoader().calculatePotentialContexts();
 			nonExistantBoards.remove(name);
@@ -376,19 +340,14 @@ public class Cache {
 
 	public boolean removePlayer(String board, String playerName) {
 
-		try {
-			Connection conn = method.getConnection();
-			PreparedStatement ps = conn.prepareStatement(String.format(
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(String.format(
 					method.formatStatement(REMOVE_PLAYER),
 					tablePrefix+board
-			));
+			 ))) {
 
 			ps.setString(1, playerName);
-
 			ps.executeUpdate();
-
-			ps.close();
-			method.close(conn);
 			return true;
 		} catch (SQLException e) {
 			plugin.getLogger().log(Level.WARNING, "Unable to remove player from board:", e);
@@ -445,15 +404,13 @@ public class Cache {
 			if(method instanceof SqliteMethod) {
 				((SqliteMethod) method).newConnection();
 			}
-			Connection conn = method.getConnection();
-			PreparedStatement ps = conn.prepareStatement(String.format(
-					method.formatStatement(DROP_TABLE),
-					tablePrefix+board
-			));
-			ps.executeUpdate();
-
-			ps.close();
-			method.close(conn);
+			try (Connection conn = method.getConnection();
+				 PreparedStatement ps = conn.prepareStatement(String.format(
+						method.formatStatement(DROP_TABLE),
+						tablePrefix+board
+				 ))) {
+				ps.executeUpdate();
+			}
 			plugin.getTopManager().fetchBoards();
 			plugin.getContextLoader().calculatePotentialContexts();
 			if(plugin.getTopManager().boardExists(board)) {
@@ -640,7 +597,7 @@ public class Cache {
 					if(type == TimedType.ALLTIME) continue;
 					long lastReset = plugin.getTopManager().getLastReset(board, type)*1000;
 					if(plugin.isShuttingDown()) {
-						method.close(conn);
+						return;
 					}
 					Double lastTotal = lastTotals.get(type);
 					double lastTotalNumber = lastTotal == null ? output : lastTotal;
@@ -688,7 +645,6 @@ public class Cache {
 				}
 				statement.executeUpdate();
 				statement.close();
-				method.close(conn);
 
 			} catch(SQLException e) {
 				if(plugin.isShuttingDown()) return;
@@ -819,49 +775,38 @@ public class Cache {
 		Debug.info("last: "+lastReset+" gap: "+(startTime - lastReset));
 		String t = type.lowerName();
 		try {
-			Connection conn = method.getConnection();
-			PreparedStatement ps = conn.prepareStatement(String.format(
-					method.formatStatement(QUERY_IDVALUE),
-					tablePrefix+board
-			));
-
-			ResultSet rs = ps.executeQuery();
 			Map<String, Double> uuids = new HashMap<>();
-			while(rs.next()) {
-				uuids.put(rs.getString(1), rs.getDouble(2));
+			try (Connection conn = method.getConnection();
+				 PreparedStatement ps = conn.prepareStatement(String.format(
+						method.formatStatement(QUERY_IDVALUE),
+						tablePrefix+board
+				 ));
+				 ResultSet rs = ps.executeQuery()) {
+				while(rs.next()) {
+					uuids.put(rs.getString(1), rs.getDouble(2));
+				}
 			}
-			rs.close();
-			ps.close();
-			method.close(conn);
 			Partition<String> partition = Partition.ofSize(new ArrayList<>(uuids.keySet()), Math.max(uuids.size()/(int) Math.ceil(method.getMaxConnections()/2D), 1));
 			Debug.info("Partition length: "+partition.size()+" uuids size: "+ uuids.size()+" partition chunk size: "+partition.getChunkSize());
 			for(List<String> uuidPartition : partition) {
-				if(plugin.isShuttingDown()) {
-					method.close(conn);
-					return;
-				}
-				try {
-					Connection con = method.getConnection();
+				if(plugin.isShuttingDown()) return;
+				try (Connection con = method.getConnection()) {
 					for(String idRaw : uuidPartition) {
-						if(plugin.isShuttingDown()) {
-							method.close(con);
-							return;
-						}
-						PreparedStatement p = con.prepareStatement(String.format(
+						if(plugin.isShuttingDown()) return;
+						try (PreparedStatement p = con.prepareStatement(String.format(
 								method.formatStatement(UPDATE_RESET),
 								tablePrefix+board,
 								t+"_lasttotal",
 								t+"_delta",
 								t+"_timestamp"
-						));
-						p.setDouble(1, uuids.get(idRaw));
-						p.setDouble(2, 0);
-						p.setLong(3, newTime);
-						p.setString(4, idRaw);
-						p.executeUpdate();
-						p.close();
+						))) {
+							p.setDouble(1, uuids.get(idRaw));
+							p.setDouble(2, 0);
+							p.setLong(3, newTime);
+							p.setString(4, idRaw);
+							p.executeUpdate();
+						}
 					}
-					method.close(con);
 				} catch (SQLException e) {
 					plugin.getLogger().log(Level.WARNING, "An error occurred while resetting "+type+" of "+board+":", e);
 				}
@@ -873,7 +818,7 @@ public class Cache {
 	}
 
 	public void insertRows(String board, List<DbRow> rows) throws SQLException {
-		Connection conn = method.getConnection();
+		try (Connection conn = method.getConnection()) {
 		for(DbRow row : rows) {
 			PreparedStatement statement = conn.prepareStatement(String.format(
 					method.formatStatement(INSERT_PLAYER),
@@ -907,27 +852,23 @@ public class Cache {
 			}
 			statement.close();
 		}
-		method.close(conn);
+		} // close try-with-resources connection
 	}
 
 	public List<DbRow> getRows(String board) throws SQLException {
-		Connection conn = method.getConnection();
-		PreparedStatement ps = conn.prepareStatement(String.format(
-				method.formatStatement(QUERY_ALL),
-				tablePrefix+board
-		));
-		ResultSet resultSet = ps.executeQuery();
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(String.format(
+					method.formatStatement(QUERY_ALL),
+					tablePrefix+board
+			 ));
+			 ResultSet resultSet = ps.executeQuery()) {
 
-		List<DbRow> out = new ArrayList<>();
-
-		while(resultSet.next()) {
-			out.add(new DbRow(resultSet));
+			List<DbRow> out = new ArrayList<>();
+			while(resultSet.next()) {
+				out.add(new DbRow(resultSet));
+			}
+			return out;
 		}
-
-		ps.close();
-		resultSet.close();
-		method.close(conn);
-		return out;
 	}
 
 	public CacheMethod getMethod() {

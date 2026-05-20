@@ -83,12 +83,11 @@ public class H2Method implements CacheMethod {
             for(String tableName : tables) {
                 int version;
                 if(!tableName.startsWith(cacheInstance.getTablePrefix())) continue;
-                try {
-                    ResultSet rs = conn.createStatement().executeQuery("SELECT TABLE_NAME,COLUMN_NAME,REMARKS\n" +
-                            " FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='"+tableName+"'");
+                try (Statement versionStmt = conn.createStatement();
+                     ResultSet rs = versionStmt.executeQuery("SELECT TABLE_NAME,COLUMN_NAME,REMARKS\n" +
+                            " FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='"+tableName+"'")) {
                     rs.next();
                     version = Integer.parseInt(rs.getString("REMARKS"));
-                    rs.close();
                 } catch(NumberFormatException e) {
                     version = 0;
                 } catch(SQLException e) {
@@ -111,7 +110,7 @@ public class H2Method implements CacheMethod {
 //                            plugin.getLogger().info("The columns already exist for "+tableName+". Canceling updater and bumping DB version.");
                             try {
                                 //conn.createStatement().executeUpdate("UPDATE INFORMATION_SCHEMA.COLUMNS where TABLE_NAME=\""+tableName+"\" SET REMARKS = '1';");
-                                conn.createStatement().executeUpdate("COMMENT ON TABLE \""+tableName+"\" IS '2';");
+                                statement.executeUpdate("COMMENT ON TABLE \""+tableName+"\" IS '2';");
                             } catch (SQLException er) {
                                 er.printStackTrace();
                                 throw e;

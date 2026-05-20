@@ -63,11 +63,10 @@ public class MysqlMethod implements CacheMethod {
             for(String tableName : tables) {
                 int version;
                 if(!tableName.startsWith(cacheInstance.getTablePrefix())) continue;
-                try {
-                    ResultSet rs = conn.createStatement().executeQuery("show table status where Name='"+tableName+"'");
+                try (Statement versionStmt = conn.createStatement();
+                     ResultSet rs = versionStmt.executeQuery("show table status where Name='"+tableName+"'")) {
                     rs.next();
                     version = Integer.parseInt(rs.getString("COMMENT"));
-                    rs.close();
                 } catch(NumberFormatException e) {
                     version = 0;
                 } catch(SQLException e) {
@@ -93,7 +92,7 @@ public class MysqlMethod implements CacheMethod {
                             if(e.getMessage().contains("Duplicate")) {
                                 plugin.getLogger().info("The columns already exist for "+tableName+". Canceling updater and bumping DB version.");
                                 try {
-                                    conn.createStatement().executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '1';");
+                                    statement.executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '1';");
                                 } catch (SQLException er) {
                                     er.printStackTrace();
                                     throw e;
@@ -116,7 +115,7 @@ public class MysqlMethod implements CacheMethod {
                         if(e.getMessage().contains("Duplicate")) {
                             plugin.getLogger().info("The columns already exist for "+tableName+". Canceling updater and bumping DB version.");
                             try {
-                                conn.createStatement().executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '2';");
+                                statement.executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '2';");
                             } catch (SQLException er) {
                                 er.printStackTrace();
                                 throw e;
@@ -138,7 +137,7 @@ public class MysqlMethod implements CacheMethod {
                         if(e.getMessage().contains("Duplicate")) {
                             plugin.getLogger().info("The columns already exist for "+tableName+". Canceling updater and bumping DB version.");
                             try {
-                                conn.createStatement().executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '3';");
+                                statement.executeUpdate("ALTER TABLE `"+tableName+"` COMMENT = '3';");
                             } catch (SQLException er) {
                                 er.printStackTrace();
                                 throw e;
@@ -154,7 +153,7 @@ public class MysqlMethod implements CacheMethod {
                     for (TimedType type : TimedType.values()) {
                         if(type == TimedType.ALLTIME) continue;
                         try {
-                            conn.createStatement().executeUpdate("create index "+type.lowerName()+"_timestamp on `"+tableName+"` ("+type.lowerName()+"_timestamp)");
+                            statement.executeUpdate("create index "+type.lowerName()+"_timestamp on `"+tableName+"` ("+type.lowerName()+"_timestamp)");
                         } catch(SQLException e) {
                             if(!e.getMessage().contains("Duplicate key name")) throw e;
                         }

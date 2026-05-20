@@ -1,0 +1,562 @@
+{
+  "/Users/xsectorz/git-repos/ajLeaderboards/gradlew": {
+    "mtime": 1776495816.8355975,
+    "hash": "02c16663c6f0aa37f98d94d698c22b8c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/build.gradle.kts": {
+    "mtime": 1778153011.1727076,
+    "hash": "78802e95a0cc31960ee10a2194bffb5f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/settings.gradle.kts": {
+    "mtime": 1778152945.4055772,
+    "hash": "3ddd193ec1c83779aac594ec22117933"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-19/build.gradle.kts": {
+    "mtime": 1776495816.8357618,
+    "hash": "b7b991e6b99c9e57c3ddf120a6bfcba1"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-19/src/main/java/us/ajg0702/leaderboards/nms/nms19/HeadUtils19.java": {
+    "mtime": 1776495816.8360498,
+    "hash": "18a3582bb7d895ed83a0f725518ade02"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/build.gradle.kts": {
+    "mtime": 1776495816.8361335,
+    "hash": "025ccd9c1b2ef3e072610a95d69226e5"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/src/main/java/us/ajg0702/leaderboards/nms/legacy/DebugWrapper.java": {
+    "mtime": 1776495816.8364506,
+    "hash": "ce25a98946239210ebd0336a5e792151"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/src/main/java/us/ajg0702/leaderboards/nms/legacy/CachedData.java": {
+    "mtime": 1776495816.836395,
+    "hash": "7c95edbf4c07728b82536da415b5bdc8"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/src/main/java/us/ajg0702/leaderboards/nms/legacy/HeadUtils.java": {
+    "mtime": 1776495816.8365378,
+    "hash": "75cfef376426a508588c0df71e84cb09"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/src/main/java/us/ajg0702/leaderboards/nms/legacy/ThreadFactoryProxy.java": {
+    "mtime": 1776495816.8365972,
+    "hash": "e5e779ca7218491a9569993c69cd588e"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/nms/nms-legacy/src/main/java/us/ajg0702/leaderboards/nms/legacy/VersionedHeadUtils.java": {
+    "mtime": 1776495816.836647,
+    "hash": "8c1c23464f817c59f11d6f3028286fa3"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/test/java/RegexTest.java": {
+    "mtime": 1776495816.8450904,
+    "hash": "5c3b047d3a069cb19147ceea0c590c2f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/test/java/us/ajg0702/leaderboards/CacheTest.java": {
+    "mtime": 1776495816.845246,
+    "hash": "c33ce73080d271ced5867b9de52a0f9d"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/test/java/us/ajg0702/leaderboards/formatting/formats/TimeTest.java": {
+    "mtime": 1776495816.8454459,
+    "hash": "d1d835444fd4107def7f8b2a8bbe282f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/test/java/us/ajg0702/leaderboards/formatting/formats/ColonTimeTest.java": {
+    "mtime": 1776495816.8453765,
+    "hash": "7e74da81e5192a9d69a3f43d7d3eacc2"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/Listeners.java": {
+    "mtime": 1776495816.8370943,
+    "hash": "e2d76d63c81e705ca4653ab54c4747f6"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/LeaderboardPlugin.java": {
+    "mtime": 1777175533.7862468,
+    "hash": "b40e725f48c1807cdb1fc87fdf2af046"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/TimeUtils.java": {
+    "mtime": 1776495816.8371427,
+    "hash": "ef1d3642baea315b7a3b4d333eefbf07"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/Debug.java": {
+    "mtime": 1776495816.8369331,
+    "hash": "f57de9422d4b426be13b7623d19b11d6"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/Cache.java": {
+    "mtime": 1776496407.0875585,
+    "hash": "aa31a726bfe3787d96314da8c0779afa"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/BlockingFetch.java": {
+    "mtime": 1776495816.8379095,
+    "hash": "2eb0da2b111d02ec5b0d500f201d596a"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/ExtraManager.java": {
+    "mtime": 1776496435.6881435,
+    "hash": "dc9fe847561b03fe78df39043e8e5d66"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/CacheMethod.java": {
+    "mtime": 1776495816.838058,
+    "hash": "a90d815151145060d73b31dfc39ba656"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/methods/H2Method.java": {
+    "mtime": 1776495816.8383572,
+    "hash": "3406111dc5ae516542fb3fb0f32aaa2d"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/methods/SqliteMethod.java": {
+    "mtime": 1776495816.838545,
+    "hash": "ddfc364272c5f566a60330dcfff9f206"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/methods/MysqlMethod.java": {
+    "mtime": 1776495816.838464,
+    "hash": "471076aa4939ab5f8638cf4ae7c08544"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/cache/helpers/DbRow.java": {
+    "mtime": 1776495816.838249,
+    "hash": "489f8231350fb3d23569a247aa4b9276"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/lpcontext/PositionContext.java": {
+    "mtime": 1776495816.8406482,
+    "hash": "65a02e7c8d58cc75cedba935779dec82"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/lpcontext/WithoutLPCtx.java": {
+    "mtime": 1776495816.840748,
+    "hash": "d1222f6af24a42418f39024815f6d745"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/lpcontext/WithLPCtx.java": {
+    "mtime": 1776495816.8407032,
+    "hash": "d6d71288450047e85e8d099cfa95ec54"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/lpcontext/LuckpermsContextLoader.java": {
+    "mtime": 1776495816.8405669,
+    "hash": "423560f18009d4e0eeb215385a378704"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/armorstands/ArmorStandCache.java": {
+    "mtime": 1776495816.8401186,
+    "hash": "ba7cec9a5a0c2e340374c8fb9e29d14c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/armorstands/ArmorStandRequest.java": {
+    "mtime": 1776495816.8402529,
+    "hash": "835fda7c9137d93089f3827a49c4b6f6"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/armorstands/ArmorStandManager.java": {
+    "mtime": 1776495816.8402078,
+    "hash": "59966fec69b5986239c6e519e965803d"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/heads/HeadManager.java": {
+    "mtime": 1776495816.8404853,
+    "hash": "f219a880a40df8c34136acacb54835c1"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/signs/BoardSign.java": {
+    "mtime": 1776495816.8408437,
+    "hash": "e77fed79df409bafce87b3092bae5df3"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/displays/signs/SignManager.java": {
+    "mtime": 1776495816.8409228,
+    "hash": "a663a6cc7a31e6cdc5547a944aa77b26"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/Placeholder.java": {
+    "mtime": 1776495816.841563,
+    "hash": "1e56bb6e2050d0e356c190ec2b1c7fa8"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/CachedPlaceholder.java": {
+    "mtime": 1776495816.841518,
+    "hash": "53773c48480c69b4c97be9e5f0f1bb3d"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/PlaceholderExpansion.java": {
+    "mtime": 1776495816.841633,
+    "hash": "b5dee52db480c0fc7d59377a531c4d78"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/Size.java": {
+    "mtime": 1776495816.8417895,
+    "hash": "7deab7b8a394e2c9bf57d5e7fb69c979"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/Reset.java": {
+    "mtime": 1776495816.8417294,
+    "hash": "5b8e07d8e10f6bebb2ed30d193b8e395"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/TotalRaw.java": {
+    "mtime": 1776495816.8419523,
+    "hash": "48d243e676090e582e556db1c322c029"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/TotalFormatted.java": {
+    "mtime": 1776495816.8418946,
+    "hash": "a56588e49f97d17aef680f7b8c55dc18"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/Total.java": {
+    "mtime": 1776495816.841837,
+    "hash": "4e6c7d5ba26e573f507018faa905197b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/DisplayName.java": {
+    "mtime": 1776495816.8422358,
+    "hash": "9d3f07d98bab1a723aaddf7a07b860a8"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Prefix.java": {
+    "mtime": 1776495816.8423715,
+    "hash": "41fb4f18774b0ab36b7546784fe95b30"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/UUID.java": {
+    "mtime": 1776495816.8426154,
+    "hash": "6ae3b4059449f5284c64c47f4ff8654b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Time.java": {
+    "mtime": 1776495816.8425708,
+    "hash": "6067e461c4367280627776b800b65d15"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Extra.java": {
+    "mtime": 1776495816.8422809,
+    "hash": "afb19c3dd190ea8c066cf91e6ea85cfc"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Skin.java": {
+    "mtime": 1776495816.8424716,
+    "hash": "caf31592848d48735fc33d95be955a01"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Name.java": {
+    "mtime": 1776495816.8423257,
+    "hash": "d4061edd508a1bf668dd934e0f31a6fe"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Value.java": {
+    "mtime": 1776495816.8426664,
+    "hash": "5226b64a338e89a98b346b3fc071cc2c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Suffix.java": {
+    "mtime": 1776495816.842519,
+    "hash": "1efaac56637019aed9d70797048b2a8b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/Color.java": {
+    "mtime": 1776495816.842184,
+    "hash": "6feb0773448b67b440b8cf1be1f510bf"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/RawValue.java": {
+    "mtime": 1776495816.8424246,
+    "hash": "36008826756ad3d9bc81772ad9bee0f6"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/lb/ValueFormatted.java": {
+    "mtime": 1776495816.8427236,
+    "hash": "8ad9f52b3f8bd7865ecfb009fe90076b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelPrefix.java": {
+    "mtime": 1776495816.8435636,
+    "hash": "21c44372437177cc11c38ef331f8ab44"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelName.java": {
+    "mtime": 1776495816.843452,
+    "hash": "ae90cda8b9e73ebbe9f9b282a2a46434"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelDisplayName.java": {
+    "mtime": 1776495816.8433259,
+    "hash": "d7ee46b9b0f65f5e23caa5c1a4ca5729"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelColor.java": {
+    "mtime": 1776495816.8432791,
+    "hash": "b5e32e9826d9d0f8293acaa7b7e82d68"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelRawValue.java": {
+    "mtime": 1776495816.8436158,
+    "hash": "161cbb0d039694fc3ac0395cdc860fc8"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelTime.java": {
+    "mtime": 1776495816.8437054,
+    "hash": "ed0531e8c2487f29c6c0a1916d6363fc"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelValue.java": {
+    "mtime": 1776495816.8437593,
+    "hash": "3ae8c549deb4de80a9252fbb0c3c2318"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelSuffix.java": {
+    "mtime": 1776495816.843657,
+    "hash": "4461c658ba0d1f105fce36755be9c351"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelPosition.java": {
+    "mtime": 1776495816.843512,
+    "hash": "5fceec6f2fa84cb5c5978b2efc218ed4"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelValueFormatted.java": {
+    "mtime": 1776495816.8438146,
+    "hash": "fd228a8626a2742754fb2fe979700211"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/relative/RelExtra.java": {
+    "mtime": 1776495816.8433871,
+    "hash": "c1ca51db7bfd4f3a943886c1d7122625"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/debug/Fetching.java": {
+    "mtime": 1776495816.8420532,
+    "hash": "75012a33ca9e4da3015fa6572be952dc"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/debug/Rolling.java": {
+    "mtime": 1776495816.8421032,
+    "hash": "a71db766293c46c797c777fddc4f4ac9"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerValueTime.java": {
+    "mtime": 1776495816.8431988,
+    "hash": "8d4449fcad7a2872597d7619fa78c1ac"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerExtra.java": {
+    "mtime": 1776495816.8428094,
+    "hash": "81ac532f1e67732cc3c1d97bec95978c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerPositionFormatted.java": {
+    "mtime": 1776495816.842902,
+    "hash": "0804da34ffdf4a2b881df1e0df8b0217"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerValueRaw.java": {
+    "mtime": 1776495816.8431416,
+    "hash": "71195412df089793d9fce6651e4083c5"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerValueFormatted.java": {
+    "mtime": 1776495816.8430824,
+    "hash": "5b4a8068806c38215496130abc4d1b4d"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerValue.java": {
+    "mtime": 1776495816.8430207,
+    "hash": "8ffe16469d63370cad7f2f3e0a78108b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerPosition.java": {
+    "mtime": 1776495816.842856,
+    "hash": "fac9ff27063f781db50ad063ad076fa3"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/placeholders/placeholders/player/PlayerTime.java": {
+    "mtime": 1776495816.8429642,
+    "hash": "d47cacabd43e2f5cf4e745d9f98fbe71"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/EasyJsonObject.java": {
+    "mtime": 1776495816.8439977,
+    "hash": "8d5b6c912d3639e5dfa98ee69d4d14a0"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/ResetSaver.java": {
+    "mtime": 1776495816.8443584,
+    "hash": "921d9cafb4ef1d466e69b84ee8227f92"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/UnClosableConnection.java": {
+    "mtime": 1776495816.8445,
+    "hash": "68388145c679a6364315c6592f39ef77"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/BoardPlayer.java": {
+    "mtime": 1776495816.8438973,
+    "hash": "29bd67f643280fdc5aa8d41182ef7b7a"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/Cached.java": {
+    "mtime": 1776495816.8439493,
+    "hash": "8b166c9043c6e22a739fe8423123d462"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/SlimJarLogger.java": {
+    "mtime": 1776495816.8444092,
+    "hash": "9ba709efb5747dc511142072ec86143c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/Partition.java": {
+    "mtime": 1776495816.8442922,
+    "hash": "e1dc3edb8148598f187f0e560350b9ba"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/OfflineUpdater.java": {
+    "mtime": 1776495816.844232,
+    "hash": "27a809b0288b1bf49fca8e2fc8aedeb4"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/Exporter.java": {
+    "mtime": 1776495816.8440657,
+    "hash": "5e59e3276caec451c2e01c47a393e451"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/utils/Metrics.java": {
+    "mtime": 1776495816.8441522,
+    "hash": "9d8e5bcd906ea9b308ec788a576e33ee"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/formatting/Format.java": {
+    "mtime": 1776495816.8410025,
+    "hash": "83e593ab0477f86500a5956ff0dcc8b1"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/formatting/PlaceholderFormatter.java": {
+    "mtime": 1776495816.841057,
+    "hash": "a7a81942e0ed8edab039cdd277b1c7d2"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/formatting/formats/Default.java": {
+    "mtime": 1776495816.8412194,
+    "hash": "db736298ade9e3e06803b7072b92fe8e"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/formatting/formats/Time.java": {
+    "mtime": 1776495816.8412962,
+    "hash": "0a42939a8dcf94656f51f9564b1b74b0"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/formatting/formats/ColonTime.java": {
+    "mtime": 1776495816.8411376,
+    "hash": "d641494dbea66590c915600c5c4fa1fd"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/TimedType.java": {
+    "mtime": 1776495816.8375154,
+    "hash": "69a2f3b530c9dabbd7ad88486c3a7255"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/TopManager.java": {
+    "mtime": 1776496286.61184,
+    "hash": "756ca95b6086067bf91bdee7f4ce9df7"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/StatEntry.java": {
+    "mtime": 1776495816.8374646,
+    "hash": "4f79c6668c359de64efb7e298ead26d0"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/keys/BoardType.java": {
+    "mtime": 1776495816.837684,
+    "hash": "7472a88b9044195d7ee1fb1959d7a648"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/keys/PlayerBoardType.java": {
+    "mtime": 1776495816.8377795,
+    "hash": "74e6dd5e859104b09d78edcc5e853345"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/keys/PositionBoardType.java": {
+    "mtime": 1776495816.8378315,
+    "hash": "c0b8a21ec67c776d83fa39ad35274363"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/boards/keys/ExtraKey.java": {
+    "mtime": 1776495816.8377347,
+    "hash": "88d3a5d8946056710f478f12ad816f2f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/LeaderboardGUI.java": {
+    "mtime": 1777808803.977413,
+    "hash": "fd54c596e3b1b16e7209ea0db7fb0eaf"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/ProfileGUI.java": {
+    "mtime": 1777143450.6257758,
+    "hash": "bee82bdbfd29f5169049a6e0bde7fcd2"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/LeaderboardRedisCache.java": {
+    "mtime": 1777141710.0774515,
+    "hash": "c25c4606bf892c1b84e86d1c9c37a905"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/UUIDLookup.java": {
+    "mtime": 1777141677.045234,
+    "hash": "3e4a4a0df6ec585da8777b35a2871805"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/LeaderboardGUIListener.java": {
+    "mtime": 1777143435.7021224,
+    "hash": "2ad627b2f4d58e2511dd9e9ceaffd200"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/LeaderboardHolder.java": {
+    "mtime": 1777143422.0813563,
+    "hash": "54d7a853e1909eef6c5b8658befc2597"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/gui/ProfileHolder.java": {
+    "mtime": 1777130815.5498445,
+    "hash": "63579dd10efd2f891a0943b1eb6ddfdd"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/api/events/UpdatePlayerEvent.java": {
+    "mtime": 1776495816.8373034,
+    "hash": "891e3aeeed3cd7fb70200f0675a67d0a"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/api/events/PreTimedTypeResetEvent.java": {
+    "mtime": 1776495816.8372498,
+    "hash": "4dbec7e0b872a7ec7a9281fa280370b1"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/MainCommand.java": {
+    "mtime": 1777141174.806399,
+    "hash": "3f92b2d0e172551e1661a84814f2ba1c"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Reset.java": {
+    "mtime": 1776495816.839231,
+    "hash": "02975447d9d32f6e7487730715b0acf9"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/ListCommand.java": {
+    "mtime": 1776495816.8390167,
+    "hash": "c10e722f005ca45f7ff807b601a5c8b8"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Update.java": {
+    "mtime": 1776495816.8392797,
+    "hash": "2a89ad6fea34f7ef5bb95de2ec75bddc"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Add.java": {
+    "mtime": 1776495816.838739,
+    "hash": "26f97d53a9440b5b03f5f15fcc4476b0"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/RemovePlayer.java": {
+    "mtime": 1776495816.8391836,
+    "hash": "0d32eebf4d57712193666e8cf4b2fa71"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Remove.java": {
+    "mtime": 1776495816.8391304,
+    "hash": "f6bd404277de4a661ff56c8ffe4ae48f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/UpdateAllOffline.java": {
+    "mtime": 1776495816.839337,
+    "hash": "2ce3cd6e0f41d25f9c42275cd5615437"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/ForceUpdate.java": {
+    "mtime": 1777142828.253267,
+    "hash": "53bb434091e36c9c51e4e7785af0f622"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/UpdatePlayer.java": {
+    "mtime": 1776495816.839384,
+    "hash": "7f7c2f64609f1dd1b93cc4189fc4cd7f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Viewer.java": {
+    "mtime": 1776495816.8394759,
+    "hash": "9a5646e99415a146b978f9ddb86e5439"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Import.java": {
+    "mtime": 1776495816.83896,
+    "hash": "99cb498800407fb490efd68e91547f32"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Reload.java": {
+    "mtime": 1776495816.839079,
+    "hash": "a030055cfb6f649e3382ce5ab79554e4"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/CheckUpdate.java": {
+    "mtime": 1776495816.8388216,
+    "hash": "185dbc3c589a4aba7fe92ffe3cf3ba74"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Export.java": {
+    "mtime": 1776495816.8388784,
+    "hash": "1d5586a730c1cbc9d86648ad220bfe3f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/Version.java": {
+    "mtime": 1776495816.8394303,
+    "hash": "037197bcf08468cbcae217d7b3027b5f"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/signs/Signs.java": {
+    "mtime": 1776495816.8399744,
+    "hash": "336e3f129f06c76e0d37cb60ec03d277"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/signs/RemoveSign.java": {
+    "mtime": 1776495816.8399248,
+    "hash": "39411ac02f27a740f3528b9ee6c50403"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/signs/Teleport.java": {
+    "mtime": 1776495816.8400161,
+    "hash": "3bd0981ea135d2c0f4c8e4431e7e1ebc"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/signs/ListSigns.java": {
+    "mtime": 1776495816.8398716,
+    "hash": "6bde050cb4e627fd3eae53c5be60dd92"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/signs/AddSign.java": {
+    "mtime": 1776495816.8398066,
+    "hash": "3d8c8959a3f9d66d021b387a5a122a3b"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/debug/Format.java": {
+    "mtime": 1776495816.8395593,
+    "hash": "d8229bcd8c0b6846f9cdf05f44001960"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/debug/Time.java": {
+    "mtime": 1776495816.8396997,
+    "hash": "5dd25fb12aab7e2a19eb1849726d634e"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/debug/Resets.java": {
+    "mtime": 1776495816.8396049,
+    "hash": "f3f2796775a9fc42e72d447a004f932a"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/commands/main/subcommands/debug/Save.java": {
+    "mtime": 1776495816.8396573,
+    "hash": "c51f6ab77ced442cb494510f91faae53"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/java/us/ajg0702/leaderboards/loaders/MessageLoader.java": {
+    "mtime": 1776495816.841401,
+    "hash": "28db43f33d9190d9675caecc09a59715"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/update.md": {
+    "mtime": 1776495816.8455071,
+    "hash": "37564e6733152210bcddbd3aa7f10f00"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/CLAUDE.md": {
+    "mtime": 1776496030.219236,
+    "hash": "24d48103c6536d749f805ecbb6526f61"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/resources/plugin.yml": {
+    "mtime": 1778152846.1854324,
+    "hash": "033610c2c76c9d1b747388a4056bbdb9"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/resources/config.yml": {
+    "mtime": 1777141643.2506466,
+    "hash": "7b9d1a76f867c6b1212e790b515876bf"
+  },
+  "/Users/xsectorz/git-repos/ajLeaderboards/src/main/resources/cache_storage.yml": {
+    "mtime": 1776495816.844595,
+    "hash": "569e546a26ae5e08eb36e0eb09dc6b92"
+  }
+}
