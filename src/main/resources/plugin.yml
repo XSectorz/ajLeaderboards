@@ -4,7 +4,7 @@ main: us.ajg0702.leaderboards.LeaderboardPlugin
 folia-supported: true
 author: xsectorz
 depend: [PlaceholderAPI]
-softdepend: [Vault, SkinsRestorer]
+softdepend: [Vault, SkinsRestorer, floodgate]
 description: Leaderboards for your server
 api-version: 1.13
 commands:

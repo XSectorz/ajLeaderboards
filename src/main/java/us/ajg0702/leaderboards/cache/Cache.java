@@ -37,6 +37,44 @@ public class Cache {
 	private final String SELECT_POSITION = "select 'id','value','namecache','prefixcache','suffixcache','displaynamecache',"+deltaBuilder()+" from '%s' order by '%s' %s, namecache desc limit 1 offset %d";
 	private final String SELECT_PLAYER = "select 'id','value','namecache','prefixcache','suffixcache','displaynamecache',"+deltaBuilder()+" from '%s' order by '%s' %s, namecache desc";
 	private final String GET_POSITION = "/*%s*/with N as (select *,ROW_NUMBER() OVER (order by '%s' %s, namecache desc) as position from '%s') select 'id','value','namecache','prefixcache','suffixcache','displaynamecache',position,"+deltaBuilder()+" from N where 'id'=?";
+	/**
+	 * Batched top-N query — returns positions 1..N in one round-trip.
+	 *
+	 * <p>Replaces the old pattern of 10 separate {@link #SELECT_POSITION}
+	 * calls (each with {@code LIMIT 1 OFFSET N}). The optimiser can now
+	 * walk the {@code (sortcol, namecache)} composite index just once
+	 * and stream out the first N rows — no per-call overhead, no
+	 * repeated index traversals, no JDBC round-trip × N.
+	 *
+	 * <p>Saves ~10× the latency on top-10 fetches that previously fired
+	 * 10 queries serially during {@code refreshAll} and the snapshot
+	 * refresh.
+	 */
+	private final String SELECT_TOP_N = "select 'id','value','namecache','prefixcache','suffixcache','displaynamecache',"+deltaBuilder()+" from '%s' order by '%s' %s, namecache desc limit %d";
+	/**
+	 * Faster rank lookup — uses a COUNT-based ranking instead of the
+	 * {@code ROW_NUMBER() OVER ()} CTE in {@link #GET_POSITION}.
+	 *
+	 * <p>The old CTE materialised positions for EVERY row before
+	 * filtering to the player — O(N) work even with indexes, and on a
+	 * 10k-player board that's 10k row reads per call. The new form uses
+	 * the index on the sort column to count rows ranked above the
+	 * player ({@code value > x}, with a secondary clause for
+	 * {@code namecache} ties at the same value) — typically O(rank)
+	 * rows touched instead of O(N).
+	 *
+	 * <p>Win: on a board where the player ranks 100th out of 10k, the
+	 * CTE form reads 10000 rows; this form reads ~100. For player
+	 * position checks this is the single biggest query optimisation.
+	 *
+	 * <p>The deltas at the end resolve to {@code t1}'s columns by name
+	 * — the outer query's only table alias is {@code t1}, so unqualified
+	 * column references are unambiguous to the optimiser.
+	 */
+	private final String GET_POSITION_FAST = "/*%s*/select t1.'id', t1.'value', t1.'namecache', t1.'prefixcache', t1.'suffixcache', t1.'displaynamecache', "
+			+ "(select count(*) + 1 from '%s' t2 where t2.'%s' %s t1.'%s' or (t2.'%s' = t1.'%s' and t2.'namecache' > t1.'namecache')) as position, "
+			+ deltaBuilder() + " "
+			+ "from '%s' t1 where t1.'id' = ?";
 	private final Map<String, String> CREATE_TABLE = ImmutableMap.of(
 			"sqlite", "create table if not exists '%s' (id TEXT PRIMARY KEY, value DECIMAL(65, 2)"+columnBuilder("DECIMAL(65, 2)")+", namecache TEXT, prefixcache TEXT, suffixcache TEXT, displaynamecache TEXT)",
 			"h2", "create table if not exists '%s' ('id' VARCHAR(36) PRIMARY KEY, 'value' DECIMAL(65, 2)"+columnBuilder("DECIMAL(65, 2)")+", 'namecache' VARCHAR(16), 'prefixcache' VARCHAR(1024), 'suffixcache' VARCHAR(1024), 'displaynamecache' VARCHAR(2048))",
@@ -57,6 +95,22 @@ public class Cache {
 	private final String UPDATE_RESET = "update '%s' set '%s'=?, '%s'=?, '%s'=? where id=?";
 	private final String QUERY_ALL = "select * from '%s'";
 	private final String CREATE_TIMESTAMP_INDEX = "create index %s_timestamp on '%s' (%s_timestamp)";
+	// Indexes on the columns we ORDER BY when fetching the leaderboard.
+	// Without these, every top-10 query was a full table scan + sort — and the Bedrock
+	// menu fires up to 10 SELECT_POSITION queries per category-detail open.
+	private final String CREATE_VALUE_INDEX = "create index %s_value_idx on '%s' ('value')";
+	private final String CREATE_DELTA_INDEX = "create index %s_%s_delta_idx on '%s' (%s_delta)";
+	/**
+	 * Composite (value, namecache) index — covers the GUI's exact
+	 * {@code ORDER BY value DESC, namecache DESC LIMIT N} pattern and lets
+	 * the optimiser stream rows from the index without any filesort step
+	 * for the namecache tiebreak. Without this, MySQL uses the value
+	 * single-col index and then sorts each value-bucket by namecache in
+	 * memory — adds latency on boards with many ties.
+	 */
+	private final String CREATE_VALUE_NAME_INDEX = "create index %s_value_name_idx on '%s' ('value', 'namecache')";
+	/** Same composite for each {@code <type>_delta + namecache}. */
+	private final String CREATE_DELTA_NAME_INDEX = "create index %s_%s_delta_name_idx on '%s' (%s_delta, 'namecache')";
 
 
 
@@ -142,6 +196,88 @@ public class Cache {
 
 	public List<Integer> rolling = new CopyOnWriteArrayList<>();
 
+	/**
+	 * Batched top-N fetch. Returns positions {@code 1..n} as a list in a
+	 * SINGLE database round-trip — replaces {@code n} separate
+	 * {@link #getStat(int, String, TimedType)} calls each doing
+	 * {@code LIMIT 1 OFFSET k}.
+	 *
+	 * <p>The B-tree index on {@code (sortcol, namecache)} (created by
+	 * {@link #createBoard} / {@link #ensureIndexesOnExistingBoards})
+	 * already orders rows the way we want, so the planner streams the
+	 * first {@code n} index entries straight into the result — no
+	 * filesort, no per-call setup overhead.
+	 *
+	 * <p>Used by the Redis writer refresh and the in-memory snapshot
+	 * refresh, both of which previously fired 10 sequential
+	 * {@code LIMIT 1 OFFSET k} queries per (board × timed-type) cell.
+	 * Now 1 query per cell — same data, 10× fewer round-trips.
+	 *
+	 * <p>The returned list size is {@code <= n}; missing positions are
+	 * dropped (board has fewer than n players). Each entry has its
+	 * {@code position} set to its 1-based rank.
+	 */
+	public List<StatEntry> getTopN(String board, TimedType type, int n) {
+		if (n <= 0) return java.util.Collections.emptyList();
+		if (!plugin.getTopManager().boardExists(board)) {
+			if (!nonExistantBoards.contains(board)) nonExistantBoards.add(board);
+			return java.util.Collections.emptyList();
+		}
+		boolean reverse = plugin.getAConfig().getStringList("reverse-sort").contains(board);
+		String sortBy = type == TimedType.ALLTIME ? "value" : type.lowerName() + "_delta";
+		List<StatEntry> out = new java.util.ArrayList<>(n);
+		try (Connection conn = method.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(String.format(
+					method.formatStatement(SELECT_TOP_N),
+					tablePrefix + board,
+					sortBy,
+					reverse ? "asc" : "desc",
+					n
+			))) {
+			try (ResultSet rs = ps.executeQuery()) {
+				int position = 0;
+				while (rs.next() && position < n) {
+					position++;
+					StatEntry se = processRow(rs, sortBy, position, board, type);
+					if (se != null) out.add(se);
+				}
+			}
+		} catch (SQLException e) {
+			plugin.getLogger().log(Level.WARNING, "Unable to fetch top-N for " + board + "/" + type.lowerName(), e);
+		}
+		return out;
+	}
+
+	/**
+	 * Variant of {@link #processData} that does NOT close the ResultSet
+	 * (since the caller is iterating multiple rows) and does NOT call
+	 * {@code rs.next()} itself (the caller controls iteration). Returns
+	 * null if the row is unreadable.
+	 */
+	private StatEntry processRow(ResultSet r, String sortBy, int position, String board, TimedType type) {
+		try {
+			String uuidRaw = r.getString(1);
+			String name = r.getString(3);
+			String prefix = r.getString(4);
+			String suffix = r.getString(5);
+			String displayName = r.getString(6);
+			double value = r.getDouble(dataSortByIndexes.computeIfAbsent(sortBy, k -> {
+				try { return r.findColumn(sortBy); }
+				catch (SQLException ex) { return -1; }
+			}));
+			if (uuidRaw == null) return null;
+			if (name == null) name = "-Unknown-";
+			if (prefix == null) prefix = "";
+			if (suffix == null) suffix = "";
+			if (displayName == null) displayName = name;
+			return new StatEntry(position, board, prefix, name, displayName,
+					java.util.UUID.fromString(uuidRaw), suffix, value, type);
+		} catch (SQLException e) {
+			plugin.getLogger().log(Level.WARNING, "Row read failed for " + board + "/" + type.lowerName(), e);
+			return null;
+		}
+	}
+
 	private final Map<String, Integer> sortByIndexes = new ConcurrentHashMap<>();
 	public StatEntry getStatEntry(OfflinePlayer player, String board, TimedType type) {
 		long start = System.currentTimeMillis();
@@ -155,13 +291,23 @@ public class Cache {
 		StatEntry r = null;
 		try {
 			String sortBy = type == TimedType.ALLTIME ? "value" : type.lowerName() + "_delta";
+			// GET_POSITION_FAST instead of the CTE form — same result shape
+			// (col 7 = position, value resolved via findColumn(sortBy)) but
+			// only scans O(rank) rows via the composite (sortcol, namecache)
+			// index, instead of materialising ROW_NUMBER for every row.
+			// Reverse-sort boards flip the comparison operator from > to <
+			// to invert the ordering semantics.
 			try (Connection conn = method.getConnection();
 				 PreparedStatement ps = conn.prepareStatement(String.format(
-					method.formatStatement(GET_POSITION),
-					board,
-					sortBy,
-					reverse ? "asc" : "desc",
-					tablePrefix+board
+					method.formatStatement(GET_POSITION_FAST),
+					board,                      // 1: SQL comment marker
+					tablePrefix+board,          // 2: subquery FROM
+					sortBy,                     // 3: t2.<sortcol> (compare)
+					reverse ? "<" : ">",        // 4: comparison operator
+					sortBy,                     // 5: t1.<sortcol>
+					sortBy,                     // 6: t2.<sortcol> for tie
+					sortBy,                     // 7: t1.<sortcol> for tie
+					tablePrefix+board           // 8: outer FROM
 			))) {
 				ps.setString(1, player.getUniqueId().toString());
 
@@ -320,6 +466,63 @@ public class Cache {
 						if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key") ) throw e;
 					}
 				}
+
+				// Value (ALLTIME) ordering index — speeds up "order by value desc limit 1 offset N"
+				try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+						CREATE_VALUE_INDEX,
+						tablePrefix+name,
+						tablePrefix+name
+				)))) {
+					ps.executeUpdate();
+				} catch(SQLException e) {
+					if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key")) throw e;
+				}
+
+				// Per-timed-type delta ordering indexes — daily/weekly/monthly/yearly
+				for (TimedType type : TimedType.values()) {
+					if(type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+							CREATE_DELTA_INDEX,
+							tablePrefix+name,
+							type.lowerName(),
+							tablePrefix+name,
+							type.lowerName()
+					)))) {
+						ps.executeUpdate();
+					} catch(SQLException e) {
+						if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key")) throw e;
+					}
+				}
+
+				// Composite (value, namecache) index — covers the full
+				// ORDER BY clause so the namecache tiebreak doesn't trigger
+				// a filesort. The single-col value index above stays for
+				// equality lookups; this one wins for ORDER BY + LIMIT.
+				try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+						CREATE_VALUE_NAME_INDEX,
+						tablePrefix+name,
+						tablePrefix+name
+				)))) {
+					ps.executeUpdate();
+				} catch(SQLException e) {
+					if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key")) throw e;
+				}
+
+				// Composite (<type>_delta, namecache) — same idea per timed type.
+				for (TimedType type : TimedType.values()) {
+					if(type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+							CREATE_DELTA_NAME_INDEX,
+							tablePrefix+name,
+							type.lowerName(),
+							tablePrefix+name,
+							type.lowerName()
+					)))) {
+						ps.executeUpdate();
+					} catch(SQLException e) {
+						if(!e.getMessage().contains("already exists") && !e.getMessage().contains("Duplicate key")) throw e;
+					}
+				}
 			}
 			plugin.getTopManager().fetchBoards();
 			plugin.getContextLoader().calculatePotentialContexts();
@@ -336,6 +539,124 @@ public class Cache {
 			}
 			return false;
 		}
+	}
+
+	/**
+	 * Ensure ordering indexes exist on every already-created board. Boards
+	 * created before {@link #createBoard} grew its index-creation block won't
+	 * have the value / delta indexes, which means every top-N query falls
+	 * back to a full table scan + sort — exactly the cause of the slow
+	 * {@code /leaderboard} GUI open.
+	 *
+	 * <p>Safe to run repeatedly: each {@code CREATE INDEX} is wrapped in a
+	 * try/catch that swallows the "already exists" / duplicate-key error,
+	 * matching the same pattern used inside {@link #createBoard}. Runs once
+	 * on plugin enable.
+	 *
+	 * @return the number of new indexes that landed (excludes the "already
+	 *         exists" no-ops). 0 means everything was already indexed.
+	 */
+	public int ensureIndexesOnExistingBoards() {
+		int created = 0;
+		List<String> boards = getBoards();
+		for (String name : boards) {
+			try (Connection conn = method.getConnection()) {
+				// Timestamp indexes per timed type (daily/weekly/monthly/yearly)
+				for (TimedType type : TimedType.values()) {
+					if (type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+							CREATE_TIMESTAMP_INDEX,
+							type.lowerName(),
+							tablePrefix + name,
+							type.lowerName()
+					)))) {
+						ps.executeUpdate();
+						created++;
+					} catch (SQLException e) {
+						if (!isAlreadyExistsError(e)) {
+							plugin.getLogger().log(Level.WARNING, "Failed adding timestamp index on " + name + "/" + type.lowerName(), e);
+						}
+					}
+				}
+				// Value (ALLTIME ordering) index
+				try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+						CREATE_VALUE_INDEX,
+						tablePrefix + name,
+						tablePrefix + name
+				)))) {
+					ps.executeUpdate();
+					created++;
+				} catch (SQLException e) {
+					if (!isAlreadyExistsError(e)) {
+						plugin.getLogger().log(Level.WARNING, "Failed adding value index on " + name, e);
+					}
+				}
+				// Delta indexes per timed type
+				for (TimedType type : TimedType.values()) {
+					if (type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+							CREATE_DELTA_INDEX,
+							tablePrefix + name,
+							type.lowerName(),
+							tablePrefix + name,
+							type.lowerName()
+					)))) {
+						ps.executeUpdate();
+						created++;
+					} catch (SQLException e) {
+						if (!isAlreadyExistsError(e)) {
+							plugin.getLogger().log(Level.WARNING, "Failed adding delta index on " + name + "/" + type.lowerName(), e);
+						}
+					}
+				}
+
+				// Composite (value, namecache) — covers ORDER BY value DESC,
+				// namecache DESC LIMIT N without filesort.
+				try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+						CREATE_VALUE_NAME_INDEX,
+						tablePrefix + name,
+						tablePrefix + name
+				)))) {
+					ps.executeUpdate();
+					created++;
+				} catch (SQLException e) {
+					if (!isAlreadyExistsError(e)) {
+						plugin.getLogger().log(Level.WARNING, "Failed adding (value, namecache) index on " + name, e);
+					}
+				}
+				// Composite (<type>_delta, namecache) per timed type.
+				for (TimedType type : TimedType.values()) {
+					if (type == TimedType.ALLTIME) continue;
+					try (PreparedStatement ps = conn.prepareStatement(method.formatStatement(String.format(
+							CREATE_DELTA_NAME_INDEX,
+							tablePrefix + name,
+							type.lowerName(),
+							tablePrefix + name,
+							type.lowerName()
+					)))) {
+						ps.executeUpdate();
+						created++;
+					} catch (SQLException e) {
+						if (!isAlreadyExistsError(e)) {
+							plugin.getLogger().log(Level.WARNING, "Failed adding (" + type.lowerName() + "_delta, namecache) index on " + name, e);
+						}
+					}
+				}
+			} catch (SQLException connEx) {
+				plugin.getLogger().log(Level.WARNING, "Index-ensure: failed to connect for board " + name, connEx);
+			}
+		}
+		plugin.getLogger().info("[Index Audit] Ensured ordering indexes on " + boards.size()
+				+ " board" + (boards.size() == 1 ? "" : "s") + " (" + created + " new index"
+				+ (created == 1 ? "" : "es") + " landed)");
+		return created;
+	}
+
+	private static boolean isAlreadyExistsError(SQLException e) {
+		String msg = e.getMessage();
+		if (msg == null) return false;
+		String lower = msg.toLowerCase();
+		return lower.contains("already exists") || lower.contains("duplicate key");
 	}
 
 	public boolean removePlayer(String board, String playerName) {

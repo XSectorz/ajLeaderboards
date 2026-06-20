@@ -40,6 +40,7 @@ import us.ajg0702.leaderboards.placeholders.PlaceholderExpansion;
 import us.ajg0702.leaderboards.gui.LeaderboardGUI;
 import us.ajg0702.leaderboards.gui.LeaderboardGUIListener;
 import us.ajg0702.leaderboards.gui.LeaderboardRedisCache;
+import us.ajg0702.leaderboards.gui.LeaderboardSnapshotCache;
 import us.ajg0702.leaderboards.gui.ProfileGUI;
 import us.ajg0702.leaderboards.gui.UUIDLookup;
 import us.ajg0702.leaderboards.utils.*;
@@ -81,6 +82,7 @@ public class LeaderboardPlugin extends JavaPlugin {
     private ResetSaver resetSaver;
     private UUIDLookup uuidLookup;
     private LeaderboardRedisCache redisCache;
+    private LeaderboardSnapshotCache snapshotCache;
     private final Exporter exporter = new Exporter(this);
     private final PlaceholderFormatter placeholderFormatter = new PlaceholderFormatter(this);
 
@@ -228,12 +230,45 @@ public class LeaderboardPlugin extends JavaPlugin {
         redisCache.init();
         if (redisCache.isEnabled() && redisCache.isWriter()) {
             long intervalTicks = redisCache.getRefreshIntervalMinutes() * 60L * 20L;
+
+            // Fire the FIRST refresh immediately as a separate async task
+            // (no startup delay). Previously this waited 5 seconds via the
+            // timer's initial delay, leaving Redis cold for ~6–7s after
+            // plugin enable; every /leaderboard opened during that window
+            // fell through to the snapshot/DB fallback path. Now: Redis
+            // starts warming within milliseconds of onEnable returning,
+            // and the refreshInProgress guard inside refreshAll() prevents
+            // any overlap with the periodic timer if a tick happens to
+            // coincide with this initial kick-off.
+            getScheduler().runTaskAsynchronously(() -> {
+                if (!isShuttingDown()) redisCache.refreshAll();
+            });
+
+            // Periodic refresh — initial delay is now one FULL interval
+            // (not 5 ticks) since we already kicked off the warm-up above.
             getScheduler().runTaskTimerAsynchronously(() -> {
                 if (!isShuttingDown()) {
                     redisCache.refreshAll();
                 }
-            }, 5 * 20L, intervalTicks); // first run after 5 seconds, then every interval
+            }, intervalTicks, intervalTicks);
         }
+
+        // Ensure ordering indexes exist on every already-created board.
+        // Boards predating the create-index block don't have value/delta
+        // indexes — without them, /leaderboard's top-N queries are full
+        // table scans + sort. Run async so we don't block startup; on
+        // databases with many boards this can take a second or two.
+        getScheduler().runTaskAsynchronously(() -> {
+            try { cache.ensureIndexesOnExistingBoards(); }
+            catch (Throwable t) { getLogger().warning("[Index Audit] failed: " + t.getMessage()); }
+        });
+
+        // Initialize in-memory snapshot cache (always active, no Redis required).
+        // Now started without the previous 5-second startup delay — refresh fires
+        // immediately so the first /leaderboard open after a restart hits a hot
+        // cache instead of falling through to direct DB queries.
+        snapshotCache = new LeaderboardSnapshotCache(this);
+        snapshotCache.start();
 
         // Register /leaderboard command
         if (getCommand("leaderboard") != null) {
@@ -453,6 +488,10 @@ public class LeaderboardPlugin extends JavaPlugin {
         return uuidLookup;
     }
 
+    public LeaderboardSnapshotCache getSnapshotCache() {
+        return snapshotCache;
+    }
+
     public LeaderboardRedisCache getRedisCache() {
         return redisCache;
     }
@@ -578,6 +617,28 @@ public class LeaderboardPlugin extends JavaPlugin {
                     } catch (ExecutionException | InterruptedException e) {
                         if(isShuttingDown()) return;
                         getLogger().log(Level.WARNING, "Unable to reset "+type+": (interupted/exception)", e);
+                    }
+                    // BOUNDARY-ALIGNED REDIS REFRESH:
+                    // Immediately after the DB-side reset (daily 00:00 /
+                    // weekly Mon 00:00 / monthly 1st 00:00 / yearly Jan 1
+                    // 00:00), trigger a Redis refresh so the cached
+                    // leaderboard shows the post-reset state instantly.
+                    // Without this, Redis would keep serving the pre-reset
+                    // top-10 until the next periodic refresh tick — which
+                    // could be up to refresh-interval minutes of stale
+                    // data on the most user-visible moment of the day.
+                    //
+                    // refreshAll() is a no-op on non-writer nodes (internal
+                    // guard), so this is safe to call from every server.
+                    // It's also re-entrancy-safe via the
+                    // refreshInProgress flag — if a periodic refresh is
+                    // already running when this fires, it's a single-line
+                    // log and skip.
+                    if (redisCache != null && redisCache.isEnabled() && redisCache.isWriter()
+                            && !isShuttingDown()) {
+                        getLogger().info("[ResetHook] " + type.lowerName()
+                                + " reset complete — triggering boundary Redis refresh");
+                        redisCache.refreshAll();
                     }
                 },
                 secsTilNextReset*20L

@@ -35,6 +35,27 @@ public class Listeners implements Listener {
                         ));
             }, 40);
         }
+        // Pre-warm the snapshot cache's player-position entries so the
+        // player's first /leaderboard skips the DB-fallback path. Without
+        // this, the first open serialised one DB query per board (~10) for
+        // the player position — the bulk of the first-open latency.
+        //
+        // IMPORTANT: this MUST happen BEFORE the update-stats / update-on-
+        // join early-returns. The prefetch is a read-only cache fill, not
+        // a stat write — it should run regardless of whether the server is
+        // configured to also write stats on join. Previously the prefetch
+        // was unreachable when update-on-join=false, leaving cold-cache
+        // first-opens slow on servers that intentionally disable join-time
+        // stat updates to reduce DB pressure.
+        //
+        // Fire-and-forget on the async scheduler (Folia-aware via
+        // CompatScheduler) so we don't block the join sequence.
+        if (plugin.getSnapshotCache() != null) {
+            plugin.getScheduler().runTaskLaterAsynchronously(
+                    () -> plugin.getSnapshotCache().prefetchPlayer(e.getPlayer().getUniqueId()),
+                    20L);   // 1s delay so we don't fight join-time DB writes
+        }
+
         if(!plugin.getAConfig().getBoolean("update-stats")) return;
         if(!plugin.getAConfig().getBoolean("update-on-join")) return;
         plugin.getScheduler().runTaskAsynchronously(() -> plugin.getCache().updatePlayerStats(e.getPlayer()));

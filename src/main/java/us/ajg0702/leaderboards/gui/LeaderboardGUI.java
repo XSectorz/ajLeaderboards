@@ -80,75 +80,123 @@ public class LeaderboardGUI {
     private static final int INVENTORY_SIZE = 36;
     private static final String INVENTORY_TITLE = "\u00A78\u029F\u1D07\u1D00\u1D05\u1D07\u0280\u0299\u1D0F\u1D00\u0280\u1D05";
 
+    /** Per-build timeout \u2014 generous: the slowest first-open shouldn't hang
+     *  the player even if the DB stalls. After this, partial slots render
+     *  with whatever was completed; the next open will repopulate. */
+    private static final long BUILD_TIMEOUT_SECONDS = 8;
+
+    /** Pull to a static \u2014 {@code NumberFormat.getNumberInstance(Locale.US)}
+     *  is moderately heavy (Locale lookup + DecimalFormat construction)
+     *  and we were calling it inside the per-category lore builder for
+     *  every player. NumberFormat instances are NOT thread-safe but the
+     *  US locale is symmetric and {@code .format(int)} on a shared
+     *  instance is safe enough for our purposes; we synchronize the
+     *  format call to be defensive. */
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance(Locale.US);
+    private static String formatPosition(long pos) {
+        synchronized (NUMBER_FORMAT) { return NUMBER_FORMAT.format(pos); }
+    }
+
     public static void open(Player player, TimedType type, LeaderboardPlugin plugin) {
+        // Route Bedrock players to Floodgate form
+        if (BedrockLeaderboardForm.isBedrockPlayer(player)) {
+            plugin.getScheduler().runTaskAsynchronously(() ->
+                    BedrockLeaderboardForm.open(player, type, plugin));
+            return;
+        }
+
         plugin.getScheduler().runTaskAsynchronously(() -> {
             LeaderboardHolder holder = new LeaderboardHolder(type);
             Inventory inv = Bukkit.createInventory(holder, INVENTORY_SIZE, INVENTORY_TITLE);
 
             fillInventory(inv, type, player, plugin);
 
-            Runnable openAndSchedule = () -> {
+            // On Folia, player.openInventory(...) MUST run on the player's
+            // entity scheduler — not the chunk-region scheduler of their
+            // current location. Use runSync(Entity, ...) so it lands on
+            // the right thread even if the player moved during the async
+            // build. On Bukkit, runSync(Entity, ...) maps to the main
+            // thread which is correct.
+            applyOnPlayerRegion(plugin, player, () -> {
                 if (!player.isOnline()) return;
                 player.openInventory(inv);
-                // Start 1-second refresh for the clock item
                 startClockRefresh(player, inv, holder, plugin);
-            };
-
-            if (CompatScheduler.isFolia()) {
-                plugin.getScheduler().runSync(player.getLocation(), openAndSchedule);
-            } else {
-                Bukkit.getScheduler().runTask(plugin, openAndSchedule);
-            }
+            });
         });
     }
 
     /**
-     * Start a repeating task that updates only the CLOCK item every second.
+     * Dispatch {@code task} to the player's entity scheduler on Folia, or
+     * the main thread on Bukkit. Centralised so every player-inv mutation
+     * uses the same correct dispatch — previously this was open-coded as
+     * {@code runSync(player.getLocation(), ...)} which on Folia could land
+     * on the wrong region thread when the player moved chunks during the
+     * async build.
+     */
+    private static void applyOnPlayerRegion(LeaderboardPlugin plugin, Player player, Runnable task) {
+        if (CompatScheduler.isFolia()) {
+            plugin.getScheduler().runSync(player, task);
+        } else {
+            Bukkit.getScheduler().runTask(plugin, task);
+        }
+    }
+
+    /**
+     * Repeating task that updates only the CLOCK item every second.
+     *
+     * <p>Builds the new ItemStack on the async tick (no world-state
+     * touched), then dispatches the inv.setItem to the player's entity
+     * region for Folia safety. The "still has the menu open" check also
+     * happens on the entity region — touching {@code player.getOpenInventory()}
+     * from an async thread on Folia is undefined behaviour.
+     *
+     * <p>The {@link LeaderboardGUIListener#onInventoryClose} also cancels
+     * this task via {@link LeaderboardHolder#cancelRefreshTask}, so the
+     * "still open" check here is a safety net for edge cases where close
+     * fires before the timer's first tick.
      */
     private static void startClockRefresh(Player player, Inventory inv, LeaderboardHolder holder, LeaderboardPlugin plugin) {
         Task task = plugin.getScheduler().runTaskTimerAsynchronously(() -> {
-            if (!player.isOnline() || player.getOpenInventory().getTopInventory() != inv) {
-                // Player closed the inventory — cancel
+            if (!player.isOnline()) {
                 Task t = holder.getRefreshTask();
                 if (t != null) t.cancel();
                 return;
             }
-            ItemStack clockItem = buildRefreshInfoItem(plugin.getRedisCache(), plugin);
-            Runnable apply = () -> {
-                if (player.isOnline() && player.getOpenInventory().getTopInventory() == inv) {
-                    inv.setItem(REFRESH_INFO_SLOT, clockItem);
+            // Build off the region thread, apply on it.
+            final ItemStack clockItem = buildRefreshInfoItem(plugin.getRedisCache(), plugin);
+            applyOnPlayerRegion(plugin, player, () -> {
+                if (!player.isOnline()) return;
+                // getOpenInventory() must be called from the player's
+                // region thread on Folia — this lambda runs there.
+                if (player.getOpenInventory().getTopInventory() != inv) {
+                    Task t = holder.getRefreshTask();
+                    if (t != null) t.cancel();
+                    return;
                 }
-            };
-            if (CompatScheduler.isFolia()) {
-                plugin.getScheduler().runSync(player.getLocation(), apply);
-            } else {
-                Bukkit.getScheduler().runTask(plugin, apply);
-            }
-        }, 20L, 20L); // every 1 second
+                inv.setItem(REFRESH_INFO_SLOT, clockItem);
+            });
+        }, 20L, 20L);
         holder.setRefreshTask(task);
     }
 
     /**
-     * Update the already-open inventory in-place (async build, sync apply).
+     * Update the already-open inventory in-place (async build, sync apply
+     * on the player's entity region).
      */
     static void updateInventory(Player player, Inventory inv, TimedType type, LeaderboardPlugin plugin) {
         plugin.getScheduler().runTaskAsynchronously(() -> {
             final ItemStack[] built = new ItemStack[INVENTORY_SIZE];
             buildItems(built, type, player, plugin);
 
-            Runnable applyTask = () -> {
+            applyOnPlayerRegion(plugin, player, () -> {
                 if (!player.isOnline()) return;
+                // Inventory write + updateInventory both require the
+                // player's region thread on Folia.
                 for (int i = 0; i < INVENTORY_SIZE; i++) {
                     inv.setItem(i, built[i]);
                 }
                 player.updateInventory();
-            };
-
-            if (CompatScheduler.isFolia()) {
-                plugin.getScheduler().runSync(player.getLocation(), applyTask);
-            } else {
-                Bukkit.getScheduler().runTask(plugin, applyTask);
-            }
+            });
         });
     }
 
@@ -167,10 +215,63 @@ public class LeaderboardGUI {
         }
 
         LeaderboardRedisCache redisCache = plugin.getRedisCache();
+        LeaderboardSnapshotCache snapshotCache = plugin.getSnapshotCache();
 
+        // One up-front getBoards() so TopManager.boardCache is warm before
+        // any per-category boardExists check. Cheap when warm; on a cold
+        // boot it primes the cache once instead of being lazily filled per-
+        // category (which can serialize the very first call).
+        plugin.getTopManager().getBoards();
+
+        // Fan out the per-category lore builds. Each build does an
+        // independent Redis round-trip + (cache-miss) DB query, so running
+        // them in parallel turns the previously-serial 10 × latency into
+        // ~1 × latency on cache-miss opens. Cache-warm opens still gain
+        // because each Redis GET costs a network hop per category.
+        //
+        // Folia note: we submit through {@code plugin.getScheduler()
+        // .runTaskAsynchronously(...)} (a CompatScheduler bridge over
+        // Folia's AsyncScheduler) instead of a raw Java executor — so
+        // Folia tracks/cancels these tasks on plugin disable, and the
+        // pool is the bounded async pool Folia/Paper already manages
+        // (no extra thread sprawl). The buildCategoryLore work itself
+        // only touches DB / caches / ItemStack construction — no world
+        // or entity state — so it's region-thread-agnostic on Folia.
+        java.util.List<java.util.concurrent.CompletableFuture<Void>> futures = new java.util.ArrayList<>(CATEGORIES.length);
         for (CategoryDef cat : CATEGORIES) {
-            List<String> lore = buildCategoryLore(cat, type, player, plugin, redisCache);
-            slots[cat.slot] = createItem(cat.icon, cat.displayName, lore);
+            final CategoryDef c = cat;
+            final java.util.concurrent.CompletableFuture<Void> f = new java.util.concurrent.CompletableFuture<>();
+            futures.add(f);
+            plugin.getScheduler().runTaskAsynchronously(() -> {
+                try {
+                    List<String> lore = buildCategoryLore(c, type, player, plugin, redisCache, snapshotCache);
+                    slots[c.slot] = createItem(c.icon, c.displayName, lore);
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("[LeaderboardGUI] Category "
+                            + c.id + " failed for " + player.getName() + ": " + t.getMessage());
+                } finally {
+                    // Complete unconditionally so allOf doesn't hang on a
+                    // single failed category. Failed categories render as
+                    // the filler pane; player sees a (mostly) full menu.
+                    f.complete(null);
+                }
+            });
+        }
+        try {
+            java.util.concurrent.CompletableFuture
+                    .allOf(futures.toArray(new java.util.concurrent.CompletableFuture[0]))
+                    .get(BUILD_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException te) {
+            // A slow Redis/DB shouldn't lock the player out — log and ship
+            // a partial GUI. Unfilled category slots stay as the filler
+            // pane, so the player sees the menu open instead of hanging
+            // on an indefinite "executing command" prompt.
+            plugin.getLogger().warning("[LeaderboardGUI] Build timed out after "
+                    + BUILD_TIMEOUT_SECONDS + "s for " + player.getName()
+                    + " — opening with partial categories.");
+        } catch (Exception e) {
+            plugin.getLogger().warning("[LeaderboardGUI] Build failed for "
+                    + player.getName() + ": " + e.getMessage());
         }
 
         slots[TIME_TOGGLE_SLOT] = buildTimeToggleItem(type);
@@ -336,7 +437,8 @@ public class LeaderboardGUI {
     // ==================== CATEGORY LORE ====================
 
     private static List<String> buildCategoryLore(CategoryDef cat, TimedType type, Player player,
-                                                   LeaderboardPlugin plugin, LeaderboardRedisCache redisCache) {
+                                                   LeaderboardPlugin plugin, LeaderboardRedisCache redisCache,
+                                                   LeaderboardSnapshotCache snapshotCache) {
         List<String> lore = new ArrayList<>();
         lore.add(cat.description);
         lore.add("");
@@ -349,12 +451,14 @@ public class LeaderboardGUI {
             return lore;
         }
 
-        // === Top 10 ===
-        boolean usedRedis = false;
-        if (redisCache != null && redisCache.isEnabled()) {
+        // === Top 10 === Priority: Redis → Snapshot → DB fallback
+        boolean resolved = false;
+
+        // 1. Redis cache (cross-server, if enabled)
+        if (!resolved && redisCache != null && redisCache.isEnabled()) {
             List<LeaderboardRedisCache.CachedEntry> top10 = redisCache.getTop10(cat.boardName, type);
             if (top10 != null && !top10.isEmpty()) {
-                usedRedis = true;
+                resolved = true;
                 for (LeaderboardRedisCache.CachedEntry e : top10) {
                     String score = formatScore(e.score, cat.boardName);
                     lore.add(L_RANK + "#" + e.position + " " + L_NAME + e.name + " " + L_SEP + "- " + L_SCORE + score);
@@ -365,7 +469,23 @@ public class LeaderboardGUI {
             }
         }
 
-        if (!usedRedis) {
+        // 2. In-memory snapshot cache (always available, refreshes every hour, NO DB query)
+        if (!resolved && snapshotCache != null) {
+            List<LeaderboardSnapshotCache.SnapshotEntry> top10 = snapshotCache.getTop10(cat.boardName, type);
+            if (top10 != null && !top10.isEmpty()) {
+                resolved = true;
+                for (LeaderboardSnapshotCache.SnapshotEntry e : top10) {
+                    String score = formatScore(e.score, cat.boardName);
+                    lore.add(L_RANK + "#" + e.position + " " + L_NAME + e.name + " " + L_SEP + "- " + L_SCORE + score);
+                }
+                for (int pos = top10.size() + 1; pos <= 10; pos++) {
+                    lore.add(L_RANK + "#" + pos + " " + L_SEP + "- " + L_EMPTY + "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25");
+                }
+            }
+        }
+
+        // 3. DB fallback (only if both caches empty — first 5 seconds after startup)
+        if (!resolved) {
             boolean boardExists = plugin.getTopManager().boardExists(cat.boardName);
             for (int pos = 1; pos <= 10; pos++) {
                 if (!boardExists) {
@@ -387,22 +507,30 @@ public class LeaderboardGUI {
 
         lore.add("");
 
-        // === Player position ===
+        // === Player position === Priority: Redis → Snapshot → DB
         String posText = null;
+
+        // 1. Redis
         if (redisCache != null && redisCache.isEnabled()) {
             LeaderboardRedisCache.CachedEntry playerPos = redisCache.getPlayerPosition(player, cat.boardName, type);
             if (playerPos != null && playerPos.position > 0) {
-                posText = NumberFormat.getNumberInstance(Locale.US).format(playerPos.position);
+                posText = formatPosition(playerPos.position);
             }
         }
 
+        // 2. Snapshot cache (queries DB on miss but caches 2 min)
+        if (posText == null && snapshotCache != null) {
+            LeaderboardSnapshotCache.SnapshotEntry playerPos = snapshotCache.getPlayerPosition(player.getUniqueId(), cat.boardName, type);
+            if (playerPos != null && playerPos.position > 0) {
+                posText = formatPosition(playerPos.position);
+            }
+        }
+
+        // 3. DB fallback (only if both caches missed)
         if (posText == null && plugin.getTopManager().boardExists(cat.boardName)) {
             StatEntry playerEntry = plugin.getTopManager().getCachedStatEntry(player, cat.boardName, type, false);
-            if (playerEntry == null || !playerEntry.hasPlayer() || playerEntry.getPosition() <= 0) {
-                playerEntry = plugin.getCache().getStatEntry(player, cat.boardName, type);
-            }
             if (playerEntry != null && playerEntry.hasPlayer() && playerEntry.getPosition() > 0) {
-                posText = NumberFormat.getNumberInstance(Locale.US).format(playerEntry.getPosition());
+                posText = formatPosition(playerEntry.getPosition());
             }
         }
 

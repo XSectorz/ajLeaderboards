@@ -42,14 +42,16 @@ public class ProfileGUI {
                 inv.setItem(CATEGORY_SLOTS[i], item);
             }
 
+            // On Folia, openInventory() must run on the player's ENTITY
+            // scheduler, not the chunk-region scheduler for their current
+            // location. Using runSync(Entity, ...) ensures correctness
+            // even if the viewer crossed a chunk boundary during the
+            // async build.
+            Runnable openTask = () -> { if (viewer.isOnline()) viewer.openInventory(inv); };
             if (CompatScheduler.isFolia()) {
-                plugin.getScheduler().runSync(viewer.getLocation(), () -> {
-                    if (viewer.isOnline()) viewer.openInventory(inv);
-                });
+                plugin.getScheduler().runSync(viewer, openTask);
             } else {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (viewer.isOnline()) viewer.openInventory(inv);
-                });
+                Bukkit.getScheduler().runTask(plugin, openTask);
             }
         });
     }

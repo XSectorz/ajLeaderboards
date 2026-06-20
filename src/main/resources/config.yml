@@ -281,6 +281,16 @@ redis-cache-writer: false
 #  Default: 60
 redis-cache-refresh-interval: 60
 
+# ==================== GUI SNAPSHOT CACHE ====================
+# In-memory cache that pre-fetches all top 10 data periodically.
+# This makes /leaderboard open INSTANTLY (0 database queries on open).
+# Works WITHOUT Redis — always active.
+
+# How often (in minutes) to refresh the snapshot cache from DB.
+# Lower = more up-to-date but more DB load. Default 60 = every hour.
+#  Default: 60
+gui-cache-refresh-minutes: 60
+
 
 # # # # # # # # # # # # # # # # # # # # # # #
 #                                           #

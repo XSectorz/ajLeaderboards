@@ -21,6 +21,7 @@ repositories {
     maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
     maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
     maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
+    maven { url = uri("https://repo.opencollab.dev/main/") }
 
     mavenLocal()
 }
@@ -44,6 +45,7 @@ dependencies {
     implementation("us.ajg0702.commands.api:api:1.0.0")
 
     compileOnly("net.luckperms:api:5.4")
+    compileOnly("org.geysermc.floodgate:api:2.2.4-SNAPSHOT")
 
     implementation("io.papermc:paperlib:1.0.7")
 
